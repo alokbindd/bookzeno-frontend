@@ -79,14 +79,16 @@ export function BookCard({ book }: { book: Book }) {
             <Star
               key={i}
               className={`h-3.5 w-3.5 ${
-                i < Math.floor(book.rating || 0)
+                i < Math.floor((book.average_rating || book.rating) || 0)
                   ? "fill-accent text-accent"
                   : "text-border"
               }`}
             />
           ))}
           <span className="ml-1 text-xs text-muted-foreground">
-            ({(book.review_count || 0).toLocaleString()})
+            {((book.count_review || book.review_count) || 0) > 0
+              ? `(${(book.count_review || book.review_count || 0).toLocaleString()})`
+              : "No reviews yet"}
           </span>
         </div>
 
