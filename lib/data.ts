@@ -14,6 +14,8 @@ export interface Book {
   category: string
   rating?: number
   review_count?: number
+  average_rating?: number
+  count_review?: number
   stock?: number
   image?: string
   // Backend may provide `cover_image`; keep `cover_image_url` for legacy compatibility
