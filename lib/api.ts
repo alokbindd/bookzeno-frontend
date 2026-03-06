@@ -1,6 +1,19 @@
 // Use Next.js API proxy to avoid CORS issues
 const API_BASE_URL = "/api/proxy"
 
+// Custom error class for API errors
+export class APIError extends Error {
+  status: number
+  data: any
+
+  constructor(message: string, status: number, data: any = {}) {
+    super(message)
+    this.status = status
+    this.data = data
+    this.name = "APIError"
+  }
+}
+
 // Helper function to get auth token
 export function getAuthToken(): string | null {
   if (typeof window === "undefined") return null
@@ -19,10 +32,38 @@ export function clearAuthTokens() {
   localStorage.removeItem("refresh_token")
 }
 
+const AUTH_USER_KEY = "auth_user"
+
+export function setStoredUser(user: any) {
+  if (typeof window === "undefined") return
+  try {
+    localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user))
+  } catch {
+    // ignore storage failures
+  }
+}
+
+export function getStoredUser<T = any>(): T | null {
+  if (typeof window === "undefined") return null
+  const raw = localStorage.getItem(AUTH_USER_KEY)
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as T
+  } catch {
+    return null
+  }
+}
+
+export function clearStoredUser() {
+  if (typeof window === "undefined") return
+  localStorage.removeItem(AUTH_USER_KEY)
+}
+
 // Centralized fetch with auth header and error handling
-async function apiFetch(
+export async function apiFetch(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  retryCount = 0
 ): Promise<any> {
   let url = `${API_BASE_URL}/${endpoint}`
   
@@ -52,25 +93,102 @@ async function apiFetch(
 
     console.log("[v0] API Response:", { status: response.status, url })
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      if (response.status !== 404) {
-        console.error("[v0] API Error:", { status: response.status, errorData })
-      }
-      throw {
-        status: response.status,
-        message: errorData.message || errorData.detail || "API Error",
-        data: errorData,
+    // Handle token expiration
+    if (response.status === 401 && token && retryCount === 0) {
+      console.log("[v0] Token expired, attempting refresh...")
+      try {
+        await refreshAccessToken()
+        // Retry the request with the new token
+        return apiFetch(endpoint, options, retryCount + 1)
+      } catch (refreshError) {
+        console.error("[v0] Token refresh failed:", refreshError)
+        // Clear tokens and throw original error
+        clearAuthTokens()
+        const error = new APIError("Session expired. Please log in again.", 401, {})
+        console.error("[v0] API Error:", { status: 401, message: error.message })
+        throw error
       }
     }
 
-    const data = await response.json()
+    if (!response.ok) {
+      let errorData: any = {}
+      let errorMessage = ""
+      const contentType = response.headers.get("content-type")
+      
+      // Try to parse response body
+      let responseText = ""
+      try {
+        responseText = await response.text()
+      } catch (textError) {
+        console.error("[v0] Failed to read response text:", textError)
+      }
+
+      if (responseText && contentType && contentType.includes("application/json")) {
+        try {
+          errorData = JSON.parse(responseText)
+          errorMessage = errorData.message || errorData.detail || errorData.error || `HTTP ${response.status}`
+        } catch (parseError) {
+          console.error("[v0] Failed to parse error response as JSON:", parseError)
+          console.error("[v0] Response text was:", responseText)
+          errorMessage = "Invalid response format from server"
+          errorData = { message: errorMessage }
+        }
+      } else if (responseText) {
+        // Non-JSON response (like HTML error page)
+        errorMessage = responseText || `HTTP ${response.status}`
+        errorData = { message: errorMessage }
+        console.error("[v0] Non-JSON error response:", { status: response.status, text: responseText.substring(0, 200) })
+      } else {
+        // Empty response body
+        errorMessage = `HTTP ${response.status} Error`
+        errorData = { message: errorMessage }
+      }
+
+      if (response.status !== 404) {
+        console.error("[v0] API Error:", { 
+          status: response.status, 
+          endpoint,
+          message: errorMessage,
+          errorData,
+          responseText: responseText.substring(0, 200)
+        })
+      }
+      
+      const error = new APIError(errorMessage, response.status, errorData)
+      throw error
+    }
+
+    // Success response
+    let data: any
+    const contentType = response.headers.get("content-type")
+    
+    if (contentType && contentType.includes("application/json")) {
+      try {
+        data = await response.json()
+      } catch (parseError) {
+        console.error("[v0] Failed to parse success response as JSON:", parseError)
+        data = {}
+      }
+    } else {
+      // Non-JSON success response
+      const text = await response.text()
+      data = text ? { data: text } : {}
+    }
+    
     return data
   } catch (error: any) {
-    if (error.status !== 404) {
-      console.error("[v0] API Fetch Error:", { endpoint, error: error.message })
+    // Re-throw APIError as-is
+    if (error instanceof APIError) {
+      if (error.status !== 404) {
+        console.error("[v0] API Fetch Error:", { endpoint, message: error.message })
+      }
+      throw error
     }
-    throw error
+    
+    // Handle other errors
+    const message = error?.message || "Unknown error"
+    console.error("[v0] API Fetch Error:", { endpoint, message })
+    throw new APIError(message, error?.status || 500, error)
   }
 }
 
@@ -193,26 +311,46 @@ export async function clearCart() {
 }
 
 // ==================== AUTHENTICATION ====================
-export async function loginUser(email: string, password: string) {
-  const response = await apiFetch("api/accounts/login/", {
-    method: "POST",
-    body: JSON.stringify({ email, password }),
-  })
-  if (response.data?.access && response.data?.refresh) {
-    setAuthTokens(response.data.access, response.data.refresh)
+export async function loginUser(identifier: string, password: string) {
+  // Backend accepts either email or username; decide based on simple heuristic
+  const payload: any = { password }
+  if (identifier.includes("@")) {
+    payload.email = identifier
+  } else {
+    payload.username = identifier
   }
-  return response
+
+  const data = await apiFetch("api/accounts/login/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+  // Login endpoint returns raw JWT ({ access, refresh }) without envelope
+  const accessToken = (data as any).access ?? (data as any).data?.access
+  const refreshToken = (data as any).refresh ?? (data as any).data?.refresh
+
+  if (accessToken && refreshToken) {
+    setAuthTokens(accessToken, refreshToken)
+  }
+
+  const user = (data as any).user ?? (data as any).data?.user
+  if (user) {
+    setStoredUser(user)
+  }
+
+  return data
 }
 
 export async function registerUser(
   email: string,
   password: string,
   first_name?: string,
-  last_name?: string
+  last_name?: string,
+  username?: string
 ) {
   return apiFetch("api/accounts/register/", {
     method: "POST",
     body: JSON.stringify({
+      username: username || email.split('@')[0], // fallback to email prefix if no username
       email,
       password,
       first_name: first_name || "",
@@ -223,6 +361,7 @@ export async function registerUser(
 
 export async function logoutUser() {
   clearAuthTokens()
+  clearStoredUser()
   // Optionally call backend logout endpoint
   try {
     await apiFetch("api/accounts/logout/", { method: "POST" })
@@ -243,15 +382,17 @@ export async function refreshAccessToken() {
   const refreshToken = localStorage.getItem("refresh_token")
   if (!refreshToken) throw new Error("No refresh token")
 
-  const response = await apiFetch("api/accounts/refresh/", {
+  const data = await apiFetch("api/accounts/token/refresh/", {
     method: "POST",
     body: JSON.stringify({ refresh: refreshToken }),
   })
 
-  if (response.data?.access) {
-    localStorage.setItem("access_token", response.data.access)
+  const newAccessToken = (data as any).access ?? (data as any).data?.access
+
+  if (newAccessToken) {
+    localStorage.setItem("access_token", newAccessToken)
   }
-  return response
+  return data
 }
 
 // ==================== ORDERS ====================
