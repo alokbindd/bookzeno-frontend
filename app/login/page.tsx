@@ -8,7 +8,14 @@ export const metadata: Metadata = {
   description: "Sign in to your Bookzeno account",
 }
 
-export default function LoginPage() {
+interface LoginPageProps {
+  searchParams: Promise<{ message?: string }>
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const params = await searchParams
+  const message = params.message
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4 py-12">
       <Link href="/" className="mb-8 flex items-center gap-2">
@@ -22,6 +29,11 @@ export default function LoginPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             Sign in to your account
           </p>
+          {message && (
+            <div className="mt-4 rounded-md bg-green-50 p-3 text-sm text-green-800 border border-green-200">
+              {message}
+            </div>
+          )}
         </div>
 
         <LoginForm />
