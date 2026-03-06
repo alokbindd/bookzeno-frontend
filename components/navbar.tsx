@@ -29,7 +29,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
   const { totalItems } = useCart()
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user, logout } = useAuth()
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -131,12 +131,40 @@ export function Navbar() {
 
           {isAuthenticated && user ? (
             <>
-              <Button variant="ghost" size="sm" asChild className="text-foreground">
-                <Link href="/dashboard">
-                  <User className="mr-1.5 h-4 w-4" />
-                  {user.first_name || "Account"}
-                </Link>
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="gap-1 text-foreground hover:text-foreground">
+                    <User className="mr-1.5 h-4 w-4" />
+                    {user.first_name || "Account"}
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem asChild>
+                    <Link href="/dashboard" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      My Account
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="/account/change-password" className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      Change Password
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      logout().finally(() => {
+                        window.location.href = "/"
+                      })
+                    }}
+                    className="cursor-pointer text-red-600 focus:text-red-600"
+                  >
+                    <User className="mr-2 h-4 w-4" />
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           ) : (
             <Button variant="ghost" size="sm" asChild className="text-foreground">
@@ -225,6 +253,25 @@ export function Navbar() {
                   <User className="h-4 w-4" />
                   My Account
                 </Link>
+                <Link
+                  href="/account/change-password"
+                  className="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-foreground hover:bg-secondary"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <User className="h-4 w-4" />
+                  Change Password
+                </Link>
+                <button
+                  onClick={() => {
+                    logout().finally(() => {
+                      window.location.href = "/"
+                    })
+                  }}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-red-600 hover:bg-secondary"
+                >
+                  <User className="h-4 w-4" />
+                  Logout
+                </button>
               </>
             ) : (
               <>
