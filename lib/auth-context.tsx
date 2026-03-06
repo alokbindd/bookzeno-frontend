@@ -6,9 +6,14 @@ import {
   registerUser as apiRegister,
   logoutUser as apiLogout,
   getCurrentUser,
+  apiFetch,
   getAuthToken,
   setAuthTokens,
   clearAuthTokens,
+  getStoredUser,
+  setStoredUser,
+  clearStoredUser,
+  APIError,
 } from "./api"
 
 interface User {
@@ -23,12 +28,13 @@ interface AuthContextType {
   user: User | null
   loading: boolean
   isAuthenticated: boolean
-  login: (email: string, password: string) => Promise<any>
+  login: (identifier: string, password: string) => Promise<any>
   register: (
     email: string,
     password: string,
     firstName?: string,
-    lastName?: string
+    lastName?: string,
+    username?: string
   ) => Promise<any>
   logout: () => Promise<void>
   refreshUser: () => Promise<void>
@@ -44,15 +50,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       const token = getAuthToken()
+      const storedUser = getStoredUser<User>()
+      if (storedUser) setUser(storedUser)
+
       if (token) {
         try {
           const userData = await getCurrentUser()
           if (userData?.data) {
             setUser(userData.data)
+            setStoredUser(userData.data)
           }
         } catch (error) {
           console.error("[v0] Failed to fetch user", error)
-          clearAuthTokens()
+          // Don't clear tokens on refresh for non-auth failures (missing /me endpoint, backend down, etc.)
+          const status = (error as any)?.status
+          if (status === 401 || status === 403) {
+            clearAuthTokens()
+            clearStoredUser()
+            setUser(null)
+          }
         }
       }
       setLoading(false)
@@ -61,13 +77,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     initAuth()
   }, [])
 
-  const login = async (email: string, password: string) => {
+  const login = async (identifier: string, password: string) => {
     try {
-      const response = await apiLogin(email, password)
-      if (response.data?.user) {
-        setUser(response.data.user)
+      const data = await apiLogin(identifier, password)
+      const user = (data as any).user ?? (data as any).data?.user
+      if (user) {
+        setUser(user)
       }
-      return response
+      
+      // Merge guest cart with user cart
+      try {
+        await apiFetch("api/carts/merge/", { method: "POST" })
+      } catch (mergeError) {
+        console.warn("[v0] Cart merge failed:", mergeError)
+        // Don't fail login if cart merge fails
+      }
+      
+      return data
     } catch (error) {
       throw error
     }
@@ -77,17 +103,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
     firstName?: string,
-    lastName?: string
+    lastName?: string,
+    username?: string
   ) => {
     try {
-      const response = await apiRegister(email, password, firstName, lastName)
-      // Auto-login after register
-      if (response.data?.access) {
-        setAuthTokens(response.data.access, response.data.refresh)
-        if (response.data?.user) {
-          setUser(response.data.user)
-        }
-      }
+      const response = await apiRegister(email, password, firstName, lastName, username)
+      // Do not auto-login after register - account needs activation
       return response
     } catch (error) {
       throw error
@@ -119,7 +140,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const value: AuthContextType = {
     user,
     loading,
-    isAuthenticated: !!user,
+    isAuthenticated: !!getAuthToken(),
     login,
     register,
     logout,
