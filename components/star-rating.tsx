@@ -15,18 +15,30 @@ export function StarRating({
 
   return (
     <div className="flex items-center gap-0.5" aria-label={`Rating: ${rating} out of 5 stars`}>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <Star
-          key={i}
-          className={`${sizeClass} ${
-            i < Math.floor(rating)
-              ? "fill-accent text-accent"
-              : i < rating
-                ? "fill-accent/50 text-accent"
-                : "text-border"
-          }`}
-        />
-      ))}
+      {Array.from({ length: 5 }).map((_, i) => {
+        const isFull = i < Math.floor(rating)
+        const isHalf = i < rating && !isFull
+
+        return (
+          <div key={i} className="relative">
+            <Star className={`${sizeClass} text-muted-foreground/40`} strokeWidth={1.5} />
+            {isFull && (
+              <Star
+                className={`${sizeClass} absolute inset-0 fill-amber-400 text-amber-400`}
+                strokeWidth={1.5}
+              />
+            )}
+            {isHalf && (
+              <div className="absolute inset-0 overflow-hidden" style={{ width: "50%" }}>
+                <Star
+                  className={`${sizeClass} fill-amber-400 text-amber-400`}
+                  strokeWidth={1.5}
+                />
+              </div>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
