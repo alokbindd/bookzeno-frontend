@@ -35,6 +35,7 @@ export function ChangePasswordForm() {
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
         body: JSON.stringify(formData),
+        credentials: "include",
       })
 
       if (response.ok) {

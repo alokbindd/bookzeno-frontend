@@ -6,7 +6,6 @@ import {
   registerUser as apiRegister,
   logoutUser as apiLogout,
   getCurrentUser,
-  apiFetch,
   getAuthToken,
   setAuthTokens,
   clearAuthTokens,
@@ -14,6 +13,7 @@ import {
   setStoredUser,
   clearStoredUser,
   APIError,
+  mergeCart,
 } from "./api"
 
 interface User {
@@ -85,15 +85,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (user) {
         setUser(user)
       }
-      
+
       // Merge guest cart with user cart
       try {
-        await apiFetch("api/carts/merge/", { method: "POST" })
+        await mergeCart()
       } catch (mergeError) {
         console.warn("[v0] Cart merge failed:", mergeError)
         // Don't fail login if cart merge fails
       }
-      
+
       return data
     } catch (error) {
       throw error

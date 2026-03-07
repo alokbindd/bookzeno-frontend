@@ -12,7 +12,11 @@ export function BookCard({ book }: { book: Book }) {
 
   const handleAddToCart = async () => {
     try {
-      await addToCart(book.slug, 1)
+      if (!book.id) {
+        console.error("[v0] Missing book id for cart add", book)
+        return
+      }
+      await addToCart(book.id, 1)
     } catch (error) {
       console.error("[v0] Failed to add to cart", error)
     }

@@ -1,4 +1,4 @@
-// Use Next.js API proxy to avoid CORS issues
+// Use Next.js API proxy to avoid CORS issues and keep requests same-origin
 const API_BASE_URL = "/api/proxy"
 
 // Custom error class for API errors
@@ -73,28 +73,26 @@ export async function apiFetch(
     url = `${baseUrl}${url}`
   }
 
-  const headers: HeadersInit = {
-    ...(options.headers || {}),
-  }
+  const headers = new Headers(options.headers || {})
 
   // Only set JSON content type when we're not sending FormData
   const isFormData =
     typeof FormData !== "undefined" && options.body instanceof FormData
 
-  if (!isFormData && !("Content-Type" in headers)) {
-    headers["Content-Type"] = "application/json"
+  if (!isFormData && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json")
   }
 
   const token = getAuthToken()
   if (token) {
-    headers.Authorization = `Bearer ${token}`
+    headers.set("Authorization", `Bearer ${token}`)
   }
 
   try {
     console.log("[v0] API Request:", { url, method: options.method || "GET" })
     const response = await fetch(url, {
       ...options,
-      headers,
+      headers: Object.fromEntries(headers.entries()),
       credentials: "include", // For session-based cart persistence
     })
 
@@ -286,29 +284,33 @@ export async function getBooksByCategory(categorySlug: string) {
 
 // ==================== CART ====================
 export async function getCart() {
+  // Backend returns an array or { data: [...] }
   return apiFetch("api/carts/")
 }
 
-export async function addToCart(bookSlug: string, quantity: number = 1) {
+export async function addToCart(bookId: number, quantity: number = 1) {
   return apiFetch("api/carts/add/", {
     method: "POST",
-    body: JSON.stringify({ book: bookSlug, quantity }),
+    body: JSON.stringify({ book_id: bookId, quantity }),
   })
 }
 
-export async function updateCartItem(
-  cartItemId: string | number,
-  quantity: number
-) {
-  return apiFetch(`api/carts/${cartItemId}/update/`, {
-    method: "PUT",
-    body: JSON.stringify({ quantity }),
-  })
-}
-
-export async function removeFromCart(cartItemId: string | number) {
-  return apiFetch(`api/carts/${cartItemId}/delete/`, {
+export async function decrementCartItem(bookId: number) {
+  return apiFetch(`api/carts/item/${bookId}/decrement/`, {
     method: "DELETE",
+  })
+}
+
+export async function removeFromCart(bookId: number) {
+  return apiFetch(`api/carts/item/${bookId}/`, {
+    method: "DELETE",
+  })
+}
+
+export async function mergeCart() {
+  // Merge guest session cart into authenticated user's cart
+  return apiFetch("api/carts/merge/", {
+    method: "POST",
   })
 }
 

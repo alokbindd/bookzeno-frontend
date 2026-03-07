@@ -165,7 +165,11 @@ export function BookDetailClient({
   const handleAddToCart = async () => {
     try {
       setLoading(true)
-      await addToCart(book.slug, quantity)
+      if (!book.id) {
+        console.error("[v0] Missing book id for cart add", book)
+        return
+      }
+      await addToCart(book.id, quantity)
     } catch (error) {
       console.error("[v0] Failed to add to cart", error)
     } finally {

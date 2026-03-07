@@ -31,6 +31,7 @@ export default function ResetPasswordPage({ params }: ResetPasswordPageProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ new_password: newPassword }),
+        credentials: "include",
       })
 
       if (response.ok) {

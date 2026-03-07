@@ -88,7 +88,7 @@ export function CartClient() {
                       size="icon"
                       className="h-8 w-8 rounded-r-none"
                       onClick={() =>
-                        updateQuantity(item.id, Math.max(1, item.quantity - 1))
+                        updateQuantity(item.book.id, Math.max(1, item.quantity - 1))
                       }
                       aria-label="Decrease quantity"
                       disabled={loading}
@@ -103,7 +103,7 @@ export function CartClient() {
                       size="icon"
                       className="h-8 w-8 rounded-l-none"
                       onClick={() =>
-                        updateQuantity(item.id, item.quantity + 1)
+                        updateQuantity(item.book.id, item.quantity + 1)
                       }
                       aria-label="Increase quantity"
                       disabled={loading}
@@ -120,7 +120,7 @@ export function CartClient() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => removeFromCart(item.book.id)}
                       aria-label={`Remove ${item.book.title}`}
                       disabled={loading}
                     >
