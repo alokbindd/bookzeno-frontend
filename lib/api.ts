@@ -465,41 +465,70 @@ export async function updateUserProfile(formData: FormData): Promise<any> {
   })
 }
 
-// ==================== ORDERS ====================
-export async function createCheckout(
-  shippingAddress: string,
-  billingAddress: string,
-  paymentMethod: string
-) {
-  return apiFetch("api/orders/checkout/", {
-    method: "POST",
-    body: JSON.stringify({
-      shipping_address: shippingAddress,
-      billing_address: billingAddress,
-      payment_method: paymentMethod,
-    }),
-  })
+// ==================== ORDERS & CHECKOUT ====================
+export interface CheckoutPayload {
+  first_name: string
+  last_name: string
+  email: string
+  phone_number: string
+  address_line_1: string
+  address_line_2?: string
+  city: string
+  state: string
+  pincode: string
+  country: string
+  order_note?: string
 }
 
-export async function createPayment(orderId: number) {
-  return apiFetch(`api/orders/${orderId}/create-payment/`, {
+export interface CheckoutResponse {
+  order_id: number
+  order_number?: string
+  subtotal?: number | string
+  tax?: number | string
+  grand_total?: number | string
+  [key: string]: any
+}
+
+export async function createCheckout(
+  payload: CheckoutPayload
+): Promise<CheckoutResponse> {
+  const data = await apiFetch("api/orders/checkout/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  })
+  return (data as any).data ?? data
+}
+
+export interface CreatePaymentResponse {
+  paypal_order_id: string
+  approval_url: string
+  [key: string]: any
+}
+
+export async function createPayment(
+  orderId: number
+): Promise<CreatePaymentResponse> {
+  const data = await apiFetch(`api/orders/${orderId}/create-payment/`, {
     method: "POST",
   })
+  return (data as any).data ?? data
+}
+
+export interface CapturePaymentResponse {
+  order_id: number
+  [key: string]: any
 }
 
 export async function capturePayment(
-  orderId: number,
-  paymentId: string,
-  payerId: string
-) {
-  return apiFetch("api/orders/capture-payment/", {
+  paypalOrderId: string
+): Promise<CapturePaymentResponse> {
+  const data = await apiFetch("api/orders/capture-payment/", {
     method: "POST",
     body: JSON.stringify({
-      order_id: orderId,
-      payment_id: paymentId,
-      payer_id: payerId,
+      paypal_order_id: paypalOrderId,
     }),
   })
+  return (data as any).data ?? data
 }
 
 export async function getOrders(page?: number) {
