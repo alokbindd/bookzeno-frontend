@@ -72,10 +72,17 @@ export async function apiFetch(
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
     url = `${baseUrl}${url}`
   }
-  
+
   const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...options.headers,
+    ...(options.headers || {}),
+  }
+
+  // Only set JSON content type when we're not sending FormData
+  const isFormData =
+    typeof FormData !== "undefined" && options.body instanceof FormData
+
+  if (!isFormData && !("Content-Type" in headers)) {
+    headers["Content-Type"] = "application/json"
   }
 
   const token = getAuthToken()
@@ -211,12 +218,13 @@ export async function getBookReviews(slug: string) {
 
 export async function submitBookReview(
   slug: string,
-  rating: number,
-  comment: string
+  subject: string,
+  review: string,
+  rating: number
 ) {
   return apiFetch(`api/books/${slug}/review/`, {
     method: "POST",
-    body: JSON.stringify({ rating, comment }),
+    body: JSON.stringify({ subject, review, rating }),
   })
 }
 
@@ -310,7 +318,7 @@ export async function clearCart() {
   })
 }
 
-// ==================== AUTHENTICATION ====================
+// ==================== AUTHENTICATION & ACCOUNT ====================
 export async function loginUser(identifier: string, password: string) {
   // Backend accepts either email or username; decide based on simple heuristic
   const payload: any = { password }
@@ -393,6 +401,66 @@ export async function refreshAccessToken() {
     localStorage.setItem("access_token", newAccessToken)
   }
   return data
+}
+
+export async function getDashboard() {
+  return apiFetch("api/accounts/dashboard/")
+}
+
+export interface AccountOrderSummary {
+  id: number
+  order_number: string
+  status: string
+  created_at: string
+  total?: number
+  total_amount?: number
+  tax?: number
+  tax_amount?: number
+  grand_total?: number
+  total_with_tax?: number
+}
+
+export async function getAccountOrders() {
+  // Cursor pagination; first page only for now
+  return apiFetch("api/orders/")
+}
+
+export interface UserProfile {
+  first_name?: string
+  last_name?: string
+  phone_number?: string
+  address_line1?: string
+  address_line2?: string
+  address_line_1?: string
+  address_line_2?: string
+  city?: string
+  state?: string
+  pincode?: string
+  country?: string
+  profile_picture?: string
+  dashboard?: {
+    first_name?: string
+    last_name?: string
+    username?: string
+    email?: string
+    profile_picture?: string
+  }
+}
+
+export async function getUserProfile(): Promise<UserProfile | null> {
+  try {
+    const data = await apiFetch("api/accounts/userprofile/")
+    return (data as any).data ?? data
+  } catch {
+    return null
+  }
+}
+
+export async function updateUserProfile(formData: FormData): Promise<any> {
+  return apiFetch("api/accounts/userprofile/", {
+    method: "PATCH",
+    body: formData,
+  })
 }
 
 // ==================== ORDERS ====================
