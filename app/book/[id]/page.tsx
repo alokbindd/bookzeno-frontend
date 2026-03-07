@@ -41,7 +41,9 @@ export default async function BookDetailPage({
     let reviews = []
     try {
       const reviewsResponse = await getBookReviews(id)
-      reviews = Array.isArray(reviewsResponse) ? reviewsResponse : reviewsResponse.results || []
+      reviews = Array.isArray(reviewsResponse)
+        ? reviewsResponse
+        : (reviewsResponse?.data ?? reviewsResponse?.results ?? [])
     } catch {
       // Reviews might not be available
     }
