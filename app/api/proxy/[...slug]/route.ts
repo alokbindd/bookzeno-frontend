@@ -228,6 +228,79 @@ export async function PUT(
   }
 }
 
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ slug: string[] }> }
+) {
+  const { slug: slugArray } = await params
+  const slug = slugArray.join("/")
+  const backendUrl = `${BACKEND_URL}/${slug}${slug.endsWith("/") ? "" : "/"}`
+  const contentType = request.headers.get("content-type") || ""
+  const isMultipart = contentType.includes("multipart/form-data")
+  const body = isMultipart ? await request.arrayBuffer() : await request.text()
+
+  const headers: Record<string, string> = {
+    Authorization: request.headers.get("Authorization") || "",
+  }
+  if (contentType) {
+    headers["Content-Type"] = contentType
+  }
+
+  try {
+    const response = await fetch(backendUrl, {
+      method: "PATCH",
+      headers,
+      body,
+    })
+
+    const parsed = await parseResponseBody(response)
+
+    if (parsed.isJson && parsed.data) {
+      return new Response(JSON.stringify(parsed.data), {
+        status: response.status,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      })
+    } else if (parsed.text) {
+      return new Response(
+        JSON.stringify({
+          error: parsed.text,
+          status: response.status,
+        }),
+        {
+          status: response.status,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
+      )
+    } else {
+      return new Response(
+        JSON.stringify({
+          error: `HTTP ${response.status}`,
+          status: response.status,
+        }),
+        {
+          status: response.status,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        }
+      )
+    }
+  } catch (error) {
+    console.error("[v0] Proxy PATCH Error:", error)
+    return new Response(JSON.stringify({ error: "Proxy request failed" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    })
+  }
+}
+
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ slug: string[] }> }
