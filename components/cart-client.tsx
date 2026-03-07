@@ -8,10 +8,7 @@ import { Separator } from "@/components/ui/separator"
 import { useCart } from "@/lib/cart-context"
 
 export function CartClient() {
-  const { items, updateQuantity, removeFromCart, subtotal, loading } = useCart()
-
-  const tax = subtotal * 0.08
-  const total = subtotal + tax
+  const { items, updateQuantity, removeFromCart, subtotal, tax, total, loading } = useCart()
 
   if (items.length === 0) {
     return (
@@ -87,9 +84,13 @@ export function CartClient() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 rounded-r-none"
-                      onClick={() =>
-                        updateQuantity(item.book.id, Math.max(1, item.quantity - 1))
-                      }
+                      onClick={() => {
+                        if (item.quantity <= 1) {
+                          void removeFromCart(item.book.id)
+                        } else {
+                          void updateQuantity(item.book.id, item.quantity - 1)
+                        }
+                      }}
                       aria-label="Decrease quantity"
                       disabled={loading}
                     >
@@ -145,7 +146,7 @@ export function CartClient() {
               <span className="text-foreground">${subtotal.toFixed(2)}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Tax (8%)</span>
+              <span className="text-muted-foreground">Tax (18%)</span>
               <span className="text-foreground">${tax.toFixed(2)}</span>
             </div>
             <div className="flex items-center justify-between text-sm">

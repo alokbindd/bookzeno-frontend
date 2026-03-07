@@ -15,6 +15,7 @@ import {
   APIError,
   mergeCart,
 } from "./api"
+import { useCart } from "./cart-context"
 
 interface User {
   id: number
@@ -46,6 +47,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const { refreshCart, resetCartState } = useCart()
 
   // Initialize auth on mount
   useEffect(() => {
@@ -88,7 +90,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Merge guest cart with user cart
       try {
+        console.log("[v0] Auth: merging cart after login")
         await mergeCart()
+        console.log("[v0] Auth: merge complete, refreshing cart")
+        await refreshCart()
       } catch (mergeError) {
         console.warn("[v0] Cart merge failed:", mergeError)
         // Don't fail login if cart merge fails
@@ -121,6 +126,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await apiLogout()
     } finally {
       setUser(null)
+      // Clear local cart state and re-sync guest cart
+      resetCartState()
+      try {
+        console.log("[v0] Auth: refreshing cart after logout")
+        await refreshCart()
+      } catch (error) {
+        console.error("[v0] Failed to refresh cart after logout", error)
+      }
     }
   }
 

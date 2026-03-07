@@ -166,7 +166,7 @@ export function CheckoutClient() {
               <span className="text-foreground">${subtotal.toFixed(2)}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Tax (8%)</span>
+              <span className="text-muted-foreground">Tax (18%)</span>
               <span className="text-foreground">${tax.toFixed(2)}</span>
             </div>
             <div className="flex items-center justify-between text-sm">

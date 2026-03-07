@@ -30,6 +30,7 @@ interface CartContextType {
   updateQuantity: (bookId: number, quantity: number) => Promise<void>
   clearCart: () => Promise<void>
   refreshCart: () => Promise<void>
+  resetCartState: () => void
   totalItems: number
   subtotal: number
   tax: number
@@ -46,6 +47,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadCart = async () => {
       try {
+        console.log("[v0] Cart: initial loadCart()")
         const response = await getCart()
         const raw =
           Array.isArray(response) && response ||
@@ -54,30 +56,38 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           (Array.isArray(response?.data?.items) && response.data.items) ||
           []
         const cartItems: CartItem[] = (raw as any[]).map((item: any) => {
-          const bookObj = item.book ?? {}
+          const bookObj = typeof item.book === "object" && item.book !== null ? item.book : {}
           const bookId =
-            bookObj.id ??
+            (bookObj as any).id ??
             item.book_id ??
             item.book ??
             0
           const bookSlug =
-            bookObj.slug ??
+            (bookObj as any).slug ??
             item.book_slug ??
             String(bookId || "")
           const bookTitle =
-            bookObj.title ??
+            (bookObj as any).title ??
             item.book_title ??
             "Unknown title"
           const bookPrice = Number(
-            bookObj.price ??
+            (bookObj as any).price ??
               item.book_price ??
               0
           )
-          const bookImage =
-            bookObj.cover_image ??
-            bookObj.image ??
+
+          // Prefer flat book_image from the cart API payload and normalize to absolute URL
+          let bookImage: string | undefined =
             item.book_image ??
+            (bookObj as any).cover_image ??
+            (bookObj as any).image ??
             undefined
+
+          if (bookImage && !bookImage.startsWith("http")) {
+            const apiBase =
+              process.env.NEXT_PUBLIC_API_BASE_URL || "http://13.201.84.104"
+            bookImage = `${apiBase}${bookImage}`
+          }
 
           return {
             id: item.id,
@@ -104,6 +114,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const refreshCart = async () => {
     try {
+      console.log("[v0] Cart: refreshCart()")
       const response = await getCart()
       const raw =
         Array.isArray(response) && response ||
@@ -112,30 +123,38 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         (Array.isArray(response?.data?.items) && response.data.items) ||
         []
       const cartItems: CartItem[] = (raw as any[]).map((item: any) => {
-        const bookObj = item.book ?? {}
+        const bookObj = typeof item.book === "object" && item.book !== null ? item.book : {}
         const bookId =
-          bookObj.id ??
+          (bookObj as any).id ??
           item.book_id ??
           item.book ??
           0
         const bookSlug =
-          bookObj.slug ??
+          (bookObj as any).slug ??
           item.book_slug ??
           String(bookId || "")
         const bookTitle =
-          bookObj.title ??
+          (bookObj as any).title ??
           item.book_title ??
           "Unknown title"
         const bookPrice = Number(
-          bookObj.price ??
+          (bookObj as any).price ??
             item.book_price ??
             0
         )
-        const bookImage =
-          bookObj.cover_image ??
-          bookObj.image ??
+
+        // Prefer flat book_image from the cart API payload and normalize to absolute URL
+        let bookImage: string | undefined =
           item.book_image ??
+          (bookObj as any).cover_image ??
+          (bookObj as any).image ??
           undefined
+
+        if (bookImage && !bookImage.startsWith("http")) {
+          const apiBase =
+            process.env.NEXT_PUBLIC_API_BASE_URL || "http://13.201.84.104"
+          bookImage = `${apiBase}${bookImage}`
+        }
 
         return {
           id: item.id,
@@ -157,6 +176,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const addToCart = async (bookId: number, quantity: number = 1) => {
     try {
+      console.log("[v0] Cart: addToCart()", { bookId, quantity })
       await apiAddToCart(bookId, quantity)
       await refreshCart()
     } catch (error) {
@@ -173,6 +193,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const removeFromCart = async (bookId: number) => {
     try {
+      console.log("[v0] Cart: removeFromCart()", { bookId })
       await apiRemoveFromCart(bookId)
       await refreshCart()
     } catch (error) {
@@ -183,6 +204,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const updateQuantity = async (bookId: number, quantity: number) => {
     try {
+      console.log("[v0] Cart: updateQuantity()", { bookId, quantity })
       const existing = items.find((item) => item.book.id === bookId)
       if (!existing) {
         await refreshCart()
@@ -211,6 +233,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = async () => {
     try {
+      console.log("[v0] Cart: clearCart()")
       await apiClearCart()
       setItems([])
     } catch (error) {
@@ -219,12 +242,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const resetCartState = () => {
+    console.log("[v0] Cart: resetCartState() - clearing local items only")
+    setItems([])
+  }
+
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0)
   const subtotal = items.reduce(
     (sum, item) => sum + item.book.price * item.quantity,
     0
   )
-  const tax = subtotal * 0.08
+  const tax = subtotal * 0.18
   const total = subtotal + tax
 
   const value: CartContextType = {
@@ -235,6 +263,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     updateQuantity,
     clearCart,
     refreshCart,
+    resetCartState,
     totalItems,
     subtotal,
     tax,
