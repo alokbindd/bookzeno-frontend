@@ -10,6 +10,7 @@ import {
   X,
   BookOpen,
   ChevronDown,
+  LogOut,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -141,15 +142,9 @@ export function Navbar() {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard" className="cursor-pointer">
+                    <Link href="/account/dashboard" className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       My Account
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/account/change-password" className="cursor-pointer">
-                      <User className="mr-2 h-4 w-4" />
-                      Change Password
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem 
@@ -158,9 +153,9 @@ export function Navbar() {
                         window.location.href = "/"
                       })
                     }}
-                    className="cursor-pointer text-red-600 focus:text-red-600"
+                    className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
                   >
-                    <User className="mr-2 h-4 w-4" />
+                    <LogOut className="mr-2 h-4 w-4 text-red-600" />
                     Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -246,20 +241,12 @@ export function Navbar() {
             {isAuthenticated && user ? (
               <>
                 <Link
-                  href="/dashboard"
+                  href="/account/dashboard"
                   className="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-foreground hover:bg-secondary"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <User className="h-4 w-4" />
                   My Account
-                </Link>
-                <Link
-                  href="/account/change-password"
-                  className="flex items-center gap-2 rounded-md px-2 py-2 text-sm text-foreground hover:bg-secondary"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <User className="h-4 w-4" />
-                  Change Password
                 </Link>
                 <button
                   onClick={() => {
@@ -269,7 +256,7 @@ export function Navbar() {
                   }}
                   className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm text-red-600 hover:bg-secondary"
                 >
-                  <User className="h-4 w-4" />
+                  <LogOut className="h-4 w-4 text-red-600" />
                   Logout
                 </button>
               </>
