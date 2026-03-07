@@ -50,8 +50,12 @@ export interface CartItem {
 export interface Review {
   id?: number
   user?: string
+  user_name?: string
+  reviewer_name?: string
   rating: number
-  comment: string
+  subject?: string
+  comment?: string
+  review?: string
   created_at?: string
   updated_at?: string
 }
