@@ -505,10 +505,11 @@ export interface CreatePaymentResponse {
   [key: string]: any
 }
 
+// Create a PayPal payment for a specific order number
 export async function createPayment(
-  orderId: number
+  orderNumber: string
 ): Promise<CreatePaymentResponse> {
-  const data = await apiFetch(`api/orders/${orderId}/create-payment/`, {
+  const data = await apiFetch(`api/orders/${orderNumber}/payment/create/`, {
     method: "POST",
   })
   return (data as any).data ?? data
@@ -519,10 +520,11 @@ export interface CapturePaymentResponse {
   [key: string]: any
 }
 
+// Capture a PayPal payment after approval
 export async function capturePayment(
   paypalOrderId: string
 ): Promise<CapturePaymentResponse> {
-  const data = await apiFetch("api/orders/capture-payment/", {
+  const data = await apiFetch("api/orders/payment/capture/", {
     method: "POST",
     body: JSON.stringify({
       paypal_order_id: paypalOrderId,

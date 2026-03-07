@@ -11,10 +11,10 @@ import { useCart } from "@/lib/cart-context"
 import { APIError, createPayment, CreatePaymentResponse } from "@/lib/api"
 
 interface PaymentClientProps {
-  orderId: string
+  orderNumber: string
 }
 
-export function PaymentClient({ orderId }: PaymentClientProps) {
+export function PaymentClient({ orderNumber }: PaymentClientProps) {
   const router = useRouter()
   const { items, subtotal, tax, total } = useCart()
 
@@ -24,7 +24,7 @@ export function PaymentClient({ orderId }: PaymentClientProps) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!orderId) return
+    if (!orderNumber) return
     if (!items.length) {
       setLoading(false)
       return
@@ -34,12 +34,7 @@ export function PaymentClient({ orderId }: PaymentClientProps) {
       setLoading(true)
       setError(null)
       try {
-        const numericOrderId = Number(orderId)
-        if (!numericOrderId || Number.isNaN(numericOrderId)) {
-          throw new Error("Invalid order id")
-        }
-
-        const data: CreatePaymentResponse = await createPayment(numericOrderId)
+        const data: CreatePaymentResponse = await createPayment(orderNumber)
         const paypalId = data.paypal_order_id
         const approval = data.approval_url
 
@@ -52,10 +47,30 @@ export function PaymentClient({ orderId }: PaymentClientProps) {
 
         if (typeof window !== "undefined") {
           try {
+            let knownOrderId: number | null = null
+            const checkoutRaw = window.sessionStorage.getItem(
+              `checkout_order_${orderNumber}`
+            )
+            if (checkoutRaw) {
+              const checkoutParsed = JSON.parse(checkoutRaw) as {
+                order_id?: number | string | null
+              }
+              const oid = checkoutParsed.order_id
+              if (typeof oid === "number") {
+                knownOrderId = oid
+              } else if (typeof oid === "string") {
+                const parsed = Number(oid)
+                if (!Number.isNaN(parsed)) {
+                  knownOrderId = parsed
+                }
+              }
+            }
+
             window.sessionStorage.setItem(
               `paypal_order_${paypalId}`,
               JSON.stringify({
-                order_id: numericOrderId,
+                order_number: orderNumber,
+                order_id: knownOrderId,
                 paypal_order_id: paypalId,
               })
             )
@@ -82,7 +97,7 @@ export function PaymentClient({ orderId }: PaymentClientProps) {
     }
 
     void loadPayment()
-  }, [orderId, items.length])
+  }, [orderNumber, items.length])
 
   const handlePayWithPaypal = () => {
     if (!approvalUrl) {
@@ -115,7 +130,7 @@ export function PaymentClient({ orderId }: PaymentClientProps) {
         Review Your Order and Make Payment
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Order ID: {orderId}
+        Order Number: {orderNumber}
       </p>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-2">
@@ -202,7 +217,7 @@ export function PaymentClient({ orderId }: PaymentClientProps) {
 
             <div className="mt-4 space-y-1 text-sm text-foreground">
               {typeof window !== "undefined" ? (
-                <BillingAddressSummary orderId={orderId} />
+                <BillingAddressSummary orderNumber={orderNumber} />
               ) : null}
             </div>
           </div>
@@ -242,7 +257,7 @@ export function PaymentClient({ orderId }: PaymentClientProps) {
   )
 }
 
-function BillingAddressSummary({ orderId }: { orderId: string }) {
+function BillingAddressSummary({ orderNumber }: { orderNumber: string }) {
   if (typeof window === "undefined") return null
 
   let content: React.ReactNode = (
@@ -253,7 +268,7 @@ function BillingAddressSummary({ orderId }: { orderId: string }) {
   )
 
   try {
-    const raw = window.sessionStorage.getItem(`checkout_order_${orderId}`)
+    const raw = window.sessionStorage.getItem(`checkout_order_${orderNumber}`)
     if (raw) {
       const parsed = JSON.parse(raw) as {
         form?: {

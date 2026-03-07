@@ -19,7 +19,7 @@ export default async function PaymentPage({ params }: PaymentPageProps) {
     <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
       <main className="flex-1">
-        <PaymentClient orderId={order_id} />
+        <PaymentClient orderNumber={order_id} />
       </main>
       <Footer />
     </div>

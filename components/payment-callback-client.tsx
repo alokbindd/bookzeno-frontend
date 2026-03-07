@@ -15,7 +15,9 @@ export function PaymentCallbackClient() {
 
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-  const [orderIdForRetry, setOrderIdForRetry] = useState<number | null>(null)
+  const [orderNumberForRetry, setOrderNumberForRetry] = useState<string | null>(
+    null
+  )
 
   useEffect(() => {
     const paypalOrderId =
@@ -27,15 +29,23 @@ export function PaymentCallbackClient() {
       return
     }
 
+    let storedOrderNumber: string | null = null
     if (typeof window !== "undefined") {
       try {
         const stored = window.sessionStorage.getItem(
           `paypal_order_${paypalOrderId}`
         )
         if (stored) {
-          const parsed = JSON.parse(stored) as { order_id?: number }
-          if (parsed.order_id) {
-            setOrderIdForRetry(parsed.order_id)
+          const parsed = JSON.parse(stored) as {
+            order_id?: number | string
+            order_number?: string
+          }
+          if (parsed.order_number) {
+            storedOrderNumber = String(parsed.order_number)
+            setOrderNumberForRetry(storedOrderNumber)
+          } else if (parsed.order_id != null) {
+            storedOrderNumber = String(parsed.order_id)
+            setOrderNumberForRetry(storedOrderNumber)
           }
         }
       } catch {
@@ -48,10 +58,23 @@ export function PaymentCallbackClient() {
       setError(null)
       try {
         const data: CapturePaymentResponse = await capturePayment(paypalOrderId)
-        const orderId = Number((data as any).order_id)
+        const rawOrderId = (data as any).order_id
 
-        if (!orderId || Number.isNaN(orderId)) {
-          throw new Error("Payment captured but order id is missing.")
+        // Prefer the original order_number used to create the payment.
+        let redirectIdentifier: string | null = storedOrderNumber
+
+        // Fallbacks if we didn't have it in storage.
+        if (!redirectIdentifier) {
+          const responseOrderNumber = (data as any).order_number
+          if (responseOrderNumber) {
+            redirectIdentifier = String(responseOrderNumber)
+          } else if (rawOrderId != null) {
+            redirectIdentifier = String(rawOrderId)
+          }
+        }
+
+        if (!redirectIdentifier) {
+          throw new Error("Payment captured but order reference is missing.")
         }
 
         try {
@@ -60,7 +83,7 @@ export function PaymentCallbackClient() {
           // ignore cart clear error
         }
 
-        router.replace(`/order-success/${orderId}`)
+        router.replace(`/order-success/${redirectIdentifier}`)
       } catch (err: any) {
         console.error("[payment] Failed to capture payment", err)
         let message = "Failed to capture payment. Please try again."
@@ -105,10 +128,10 @@ export function PaymentCallbackClient() {
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">{error}</p>
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          {orderIdForRetry && (
+          {orderNumberForRetry && (
             <Button
               type="button"
-              onClick={() => router.push(`/payment/${orderIdForRetry}`)}
+              onClick={() => router.push(`/payment/${orderNumberForRetry}`)}
             >
               Retry Payment
             </Button>

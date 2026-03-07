@@ -21,7 +21,7 @@ export default async function OrderSuccessPage({
     <div className="flex min-h-screen flex-col bg-background">
       <Navbar />
       <main className="flex-1">
-        <OrderSuccessClient orderId={order_id} />
+        <OrderSuccessClient orderNumber={order_id} />
       </main>
       <Footer />
     </div>

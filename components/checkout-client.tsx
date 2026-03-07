@@ -131,23 +131,28 @@ export function CheckoutClient() {
       }
 
       const data: CheckoutResponse = await createCheckout(payload)
-      const orderId = Number((data as any).order_id)
+      const rawOrderNumber =
+        (data as any).order_number ?? (data as any).order?.order_number
+      const orderNumber = String(rawOrderNumber || "").trim()
 
-      if (!orderId) {
-        throw new Error("Checkout succeeded but order_id is missing from response.")
+      if (!orderNumber) {
+        throw new Error(
+          "Checkout succeeded but order_number is missing from response."
+        )
       }
 
       if (typeof window !== "undefined") {
         try {
           const snapshot = {
-            order_id: orderId,
+            order_number: orderNumber,
+            order_id: (data as any).order_id ?? null,
             form,
             subtotal,
             tax,
             total,
           }
           window.sessionStorage.setItem(
-            `checkout_order_${orderId}`,
+            `checkout_order_${orderNumber}`,
             JSON.stringify(snapshot)
           )
         } catch {
@@ -155,7 +160,7 @@ export function CheckoutClient() {
         }
       }
 
-      router.push(`/payment/${orderId}`)
+      router.push(`/payment/${orderNumber}`)
     } catch (error: any) {
       console.error("[checkout] Failed to place order", error)
       let message = "Failed to place order. Please try again."

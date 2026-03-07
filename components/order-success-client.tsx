@@ -5,10 +5,10 @@ import { CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 interface OrderSuccessClientProps {
-  orderId: string
+  orderNumber: string
 }
 
-export function OrderSuccessClient({ orderId }: OrderSuccessClientProps) {
+export function OrderSuccessClient({ orderNumber }: OrderSuccessClientProps) {
   return (
     <div className="mx-auto flex max-w-2xl flex-col items-center justify-center px-4 py-24 text-center lg:px-8">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100">
@@ -21,7 +21,7 @@ export function OrderSuccessClient({ orderId }: OrderSuccessClientProps) {
         Thank you for your purchase. Your order has been placed successfully.
       </p>
       <p className="mt-2 text-sm font-medium text-foreground">
-        Order ID: <span className="font-semibold">{orderId}</span>
+        Order Number: <span className="font-semibold">{orderNumber}</span>
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
         You will receive an email confirmation with your order details.
