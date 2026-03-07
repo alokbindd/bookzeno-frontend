@@ -38,11 +38,18 @@ export function ChangePasswordForm() {
       })
 
       if (response.ok) {
-        toast.success("Password changed successfully.")
-        router.push("/dashboard")
+        toast.success("Password updated successfully.")
+        router.push("/account/dashboard")
       } else {
-        const data = await response.json()
-        toast.error(data.message || "Failed to change password.")
+        const data = await response.json().catch(() => ({}))
+        const errors = (data as any).errors || data
+        let message = (data as any).message || "Failed to change password."
+        if (Array.isArray(errors?.old_password) && errors.old_password[0]) {
+          message = errors.old_password[0]
+        } else if (Array.isArray(errors?.new_password) && errors.new_password[0]) {
+          message = errors.new_password[0]
+        }
+        toast.error(message)
       }
     } catch (error: any) {
       console.error("Change password error:", error)
