@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { getAccountOrders } from "@/lib/api"
 
 interface OrdersResponse {
@@ -80,7 +82,7 @@ export function AccountOrdersClient() {
             <TableHead>Order Total</TableHead>
             <TableHead>Tax</TableHead>
             <TableHead>Grand Total</TableHead>
-            <TableHead>Pay</TableHead>
+            <TableHead>Action</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -111,8 +113,26 @@ export function AccountOrdersClient() {
                     year: "numeric",
                   }) : "—"}
                 </TableCell>
-                <TableCell className="text-sm capitalize">
-                  {status}
+                <TableCell>
+                  {normalizedStatus === "paid" || normalizedStatus === "completed" ? (
+                    <Badge
+                      variant="secondary"
+                      className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-100 border-emerald-200/80 dark:border-emerald-800"
+                    >
+                      Paid
+                    </Badge>
+                  ) : normalizedStatus === "pending" ? (
+                    <Badge
+                      variant="secondary"
+                      className="bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-100 border-amber-200/80 dark:border-amber-800"
+                    >
+                      Pending
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground">
+                      {status || "Unknown"}
+                    </Badge>
+                  )}
                 </TableCell>
                 <TableCell className="text-sm">
                   {currency.format(orderTotal || 0)}
@@ -125,14 +145,13 @@ export function AccountOrdersClient() {
                 </TableCell>
                 <TableCell className="text-sm">
                   {normalizedStatus === "paid" || normalizedStatus === "completed" ? (
-                    <span className="text-muted-foreground">Paid</span>
+                    <span className="text-muted-foreground">—</span>
                   ) : normalizedStatus === "pending" ? (
-                    <Link
-                      href={`/payment/${orderNumber}`}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      Pay
-                    </Link>
+                    <Button asChild size="sm" className="px-3 py-1">
+                      <Link href={`/payment/${orderNumber}`}>
+                        Pay Now
+                      </Link>
+                    </Button>
                   ) : (
                     <span className="text-muted-foreground">—</span>
                   )}
