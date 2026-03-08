@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import {
   Search,
   ShoppingCart,
@@ -27,8 +28,11 @@ import { getCategories } from "@/lib/api"
 import { Category } from "@/lib/data"
 
 export function Navbar() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
+  const [searchTerm, setSearchTerm] = useState("")
   const { totalItems } = useCart()
   const { isAuthenticated, user, logout } = useAuth()
 
@@ -57,6 +61,18 @@ export function Navbar() {
     loadCategories()
   }, [])
 
+  useEffect(() => {
+    const q = searchParams.get("q") ?? ""
+    setSearchTerm(q)
+  }, [searchParams])
+
+  const handleSearch = () => {
+    const term = searchTerm.trim()
+    if (!term) return
+    router.push(`/search?q=${encodeURIComponent(term)}`)
+    setMobileMenuOpen(false)
+  }
+
   return (
     <header
       className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm"
@@ -74,11 +90,26 @@ export function Navbar() {
         {/* Search - Desktop */}
         <div className="mx-8 hidden max-w-lg flex-1 md:flex">
           <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <button
+              type="button"
+              onClick={handleSearch}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              aria-label="Search"
+            >
+              <Search className="h-4 w-4" />
+            </button>
             <Input
               type="search"
               placeholder="Search books, authors, genres..."
               className="w-full pl-10 pr-4"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  handleSearch()
+                }
+              }}
             />
           </div>
         </div>
@@ -218,11 +249,26 @@ export function Navbar() {
         <div className="border-t border-border bg-card px-4 pb-4 md:hidden">
           {/* Mobile Search */}
           <div className="relative my-3">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <button
+              type="button"
+              onClick={handleSearch}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              aria-label="Search"
+            >
+              <Search className="h-4 w-4" />
+            </button>
             <Input
               type="search"
               placeholder="Search books..."
               className="w-full pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault()
+                  handleSearch()
+                }
+              }}
             />
           </div>
 

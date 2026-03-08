@@ -206,6 +206,19 @@ export async function getBooks(page: number = 1, category?: string) {
   return apiFetch(endpoint)
 }
 
+export async function searchBooks(query: string) {
+  const q = query.trim()
+  if (!q) return []
+  const data = await apiFetch(`api/books/search/?q=${encodeURIComponent(q)}`)
+  const list =
+    (data as any).data && Array.isArray((data as any).data)
+      ? (data as any).data
+      : Array.isArray(data)
+        ? data
+        : []
+  return list
+}
+
 export async function getBookBySlug(slug: string) {
   return apiFetch(`api/books/${slug}/`)
 }
