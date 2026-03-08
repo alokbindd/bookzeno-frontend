@@ -33,7 +33,7 @@ export function BookCard({ book }: { book: Book }) {
   // If the image is a relative path, prepend the API base URL
   if (coverImage && !coverImage.startsWith("http")) {
     const apiBase =
-      process.env.NEXT_PUBLIC_API_BASE_URL || "http://13.201.84.104"
+      process.env.NEXT_PUBLIC_API_BASE_URL 
     coverImage = `${apiBase}${coverImage}`
   }
 

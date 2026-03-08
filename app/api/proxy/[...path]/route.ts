@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server"
 import { NextResponse } from "next/server"
 
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://13.201.84.104"
+  process.env.NEXT_PUBLIC_API_BASE_URL 
 
 async function proxy(
   request: NextRequest,

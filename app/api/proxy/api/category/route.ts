@@ -1,6 +1,6 @@
 export async function GET() {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://13.201.84.104"
+    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL 
     const url = `${baseUrl}/api/category/`
     
     console.log("[v0] Proxy: Fetching categories from:", url)

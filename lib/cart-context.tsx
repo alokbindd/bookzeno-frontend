@@ -85,7 +85,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
           if (bookImage && !bookImage.startsWith("http")) {
             const apiBase =
-              process.env.NEXT_PUBLIC_API_BASE_URL || "http://13.201.84.104"
+              process.env.NEXT_PUBLIC_API_BASE_URL 
             bookImage = `${apiBase}${bookImage}`
           }
 
@@ -152,7 +152,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
         if (bookImage && !bookImage.startsWith("http")) {
           const apiBase =
-            process.env.NEXT_PUBLIC_API_BASE_URL || "http://13.201.84.104"
+            process.env.NEXT_PUBLIC_API_BASE_URL 
           bookImage = `${apiBase}${bookImage}`
         }
 
