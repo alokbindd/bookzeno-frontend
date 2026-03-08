@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { AlertTriangle, CreditCard, ShoppingBag } from "lucide-react"
+import { AlertTriangle, CreditCard } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -25,10 +25,6 @@ export function PaymentClient({ orderNumber }: PaymentClientProps) {
 
   useEffect(() => {
     if (!orderNumber) return
-    if (!items.length) {
-      setLoading(false)
-      return
-    }
 
     const loadPayment = async () => {
       setLoading(true)
@@ -105,23 +101,6 @@ export function PaymentClient({ orderNumber }: PaymentClientProps) {
       return
     }
     window.location.href = approvalUrl
-  }
-
-  if (!items.length) {
-    return (
-      <div className="mx-auto flex max-w-7xl flex-col items-center justify-center px-4 py-24 text-center lg:px-8">
-        <ShoppingBag className="h-16 w-16 text-muted-foreground/40" />
-        <h1 className="mt-4 font-serif text-2xl font-bold text-foreground">
-          Your cart is empty
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          Add some books to your cart before proceeding to payment.
-        </p>
-        <Button asChild className="mt-6">
-          <Link href="/">Browse Books</Link>
-        </Button>
-      </div>
-    )
   }
 
   return (
@@ -205,53 +184,55 @@ export function PaymentClient({ orderNumber }: PaymentClientProps) {
           </div>
         </div>
 
-        {/* Right: Order review */}
-        <div className="space-y-4">
-          <div className="rounded-lg border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold text-foreground">
-              Billing Address
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              This address was provided during checkout.
-            </p>
+        {/* Right: Order review (only show cart-based summary when items are present) */}
+        {items.length > 0 && (
+          <div className="space-y-4">
+            <div className="rounded-lg border border-border bg-card p-6">
+              <h2 className="text-lg font-semibold text-foreground">
+                Billing Address
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                This address was provided during checkout.
+              </p>
 
-            <div className="mt-4 space-y-1 text-sm text-foreground">
-              {typeof window !== "undefined" ? (
-                <BillingAddressSummary orderNumber={orderNumber} />
-              ) : null}
+              <div className="mt-4 space-y-1 text-sm text-foreground">
+                {typeof window !== "undefined" ? (
+                  <BillingAddressSummary orderNumber={orderNumber} />
+                ) : null}
+              </div>
             </div>
-          </div>
 
-          <div className="rounded-lg border border-border bg-card p-6">
-            <h2 className="text-lg font-semibold text-foreground">
-              Order Items
-            </h2>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Payment Method: <span className="font-medium">PayPal</span>
-            </p>
+            <div className="rounded-lg border border-border bg-card p-6">
+              <h2 className="text-lg font-semibold text-foreground">
+                Order Items
+              </h2>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Payment Method: <span className="font-medium">PayPal</span>
+              </p>
 
-            <div className="mt-4 space-y-3 text-sm">
-              {items.map(item => (
-                <div
-                  key={item.book.id}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex flex-col">
-                    <span className="font-medium text-foreground">
-                      {item.book.title}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      Quantity: {item.quantity}
+              <div className="mt-4 space-y-3 text-sm">
+                {items.map(item => (
+                  <div
+                    key={item.book.id}
+                    className="flex items-center justify-between"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-medium text-foreground">
+                        {item.book.title}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Quantity: {item.quantity}
+                      </span>
+                    </div>
+                    <span className="text-foreground">
+                      ${(item.book.price * item.quantity).toFixed(2)}
                     </span>
                   </div>
-                  <span className="text-foreground">
-                    ${(item.book.price * item.quantity).toFixed(2)}
-                  </span>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

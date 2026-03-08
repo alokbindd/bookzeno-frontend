@@ -80,7 +80,7 @@ export function AccountOrdersClient() {
             <TableHead>Order Total</TableHead>
             <TableHead>Tax</TableHead>
             <TableHead>Grand Total</TableHead>
-            <TableHead>View</TableHead>
+            <TableHead>Pay</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -88,6 +88,7 @@ export function AccountOrdersClient() {
             const orderNumber = order.order_number || order.number || `ORD-${order.id}`
             const created = order.created_at || order.date || order.created
             const status = order.status || order.state || "—"
+            const normalizedStatus = String(status || "").toLowerCase()
 
             const orderTotal = getOrderTotal(order)
             const tax = getTax(order)
@@ -122,13 +123,19 @@ export function AccountOrdersClient() {
                 <TableCell className="text-sm font-semibold">
                   {currency.format(grand || 0)}
                 </TableCell>
-                <TableCell>
-                  <Link
-                    href={`/account/orders/${orderNumber}`}
-                    className="text-sm font-medium text-primary hover:underline"
-                  >
-                    View
-                  </Link>
+                <TableCell className="text-sm">
+                  {normalizedStatus === "paid" || normalizedStatus === "completed" ? (
+                    <span className="text-muted-foreground">Paid</span>
+                  ) : normalizedStatus === "pending" ? (
+                    <Link
+                      href={`/payment/${orderNumber}`}
+                      className="font-medium text-primary hover:underline"
+                    >
+                      Pay
+                    </Link>
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
                 </TableCell>
               </TableRow>
             )
