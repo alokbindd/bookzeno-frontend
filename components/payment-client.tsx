@@ -7,8 +7,7 @@ import { AlertTriangle, CreditCard } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { useCart } from "@/lib/cart-context"
-import { APIError, createPayment, CreatePaymentResponse } from "@/lib/api"
+import { APIError, createPayment, CreatePaymentResponse, getOrderByNumber } from "@/lib/api"
 
 interface PaymentClientProps {
   orderNumber: string
@@ -16,67 +15,39 @@ interface PaymentClientProps {
 
 export function PaymentClient({ orderNumber }: PaymentClientProps) {
   const router = useRouter()
-  const { items, subtotal, tax, total } = useCart()
+  const [order, setOrder] = useState<any | null>(null)
+  const [orderLoading, setOrderLoading] = useState(true)
+  const [orderError, setOrderError] = useState<string | null>(null)
 
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [paypalOrderId, setPaypalOrderId] = useState<string | null>(null)
   const [approvalUrl, setApprovalUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  const currency = new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: "USD",
+  })
+
   useEffect(() => {
     if (!orderNumber) return
 
-    const loadPayment = async () => {
-      setLoading(true)
-      setError(null)
+    const loadOrder = async () => {
+      setOrderLoading(true)
+      setOrderError(null)
       try {
-        const data: CreatePaymentResponse = await createPayment(orderNumber)
-        const paypalId = data.paypal_order_id
-        const approval = data.approval_url
+        const data = await getOrderByNumber(orderNumber)
+        const ord = (data as any).data ?? data
+        setOrder(ord)
 
-        if (!paypalId || !approval) {
-          throw new Error("Payment initialization failed. Missing PayPal data.")
-        }
-
-        setPaypalOrderId(paypalId)
-        setApprovalUrl(approval)
-
-        if (typeof window !== "undefined") {
-          try {
-            let knownOrderId: number | null = null
-            const checkoutRaw = window.sessionStorage.getItem(
-              `checkout_order_${orderNumber}`
-            )
-            if (checkoutRaw) {
-              const checkoutParsed = JSON.parse(checkoutRaw) as {
-                order_id?: number | string | null
-              }
-              const oid = checkoutParsed.order_id
-              if (typeof oid === "number") {
-                knownOrderId = oid
-              } else if (typeof oid === "string") {
-                const parsed = Number(oid)
-                if (!Number.isNaN(parsed)) {
-                  knownOrderId = parsed
-                }
-              }
-            }
-
-            window.sessionStorage.setItem(
-              `paypal_order_${paypalId}`,
-              JSON.stringify({
-                order_number: orderNumber,
-                order_id: knownOrderId,
-                paypal_order_id: paypalId,
-              })
-            )
-          } catch {
-            // ignore storage failures
-          }
+        const statusRaw = ord.status || ord.state || ""
+        const normalizedStatus = String(statusRaw || "").toLowerCase()
+        if (normalizedStatus === "paid" || normalizedStatus === "completed") {
+          router.replace(`/account/orders/${orderNumber}`)
         }
       } catch (err: any) {
-        console.error("[payment] Failed to create payment", err)
-        let message = "Failed to start payment. Please try again."
+        console.error("[payment] Failed to load order", err)
+        let message = "Failed to load order details. Please try again."
         if (err instanceof APIError) {
           message =
             (err.data && (err.data.message || err.data.detail)) ||
@@ -85,22 +56,173 @@ export function PaymentClient({ orderNumber }: PaymentClientProps) {
         } else if (typeof err?.message === "string") {
           message = err.message
         }
-        setError(message)
+        setOrderError(message)
         toast.error(message)
       } finally {
-        setLoading(false)
+        setOrderLoading(false)
       }
     }
 
-    void loadPayment()
-  }, [orderNumber, items.length])
+    void loadOrder()
+  }, [orderNumber, router])
 
-  const handlePayWithPaypal = () => {
-    if (!approvalUrl) {
-      toast.error("Unable to start PayPal payment. Please try again.")
-      return
+  const items: any[] = (order?.items || order?.order_items || []) ?? []
+
+  const subtotalRaw =
+    order?.subtotal ??
+    order?.total_before_tax ??
+    order?.total_amount ??
+    order?.order_total ??
+    0
+  const taxRaw = order?.tax_amount ?? order?.tax ?? 0
+  const grandRaw =
+    order?.grand_total ??
+    order?.total_with_tax ??
+    order?.total ??
+    (typeof subtotalRaw === "string" ? parseFloat(subtotalRaw) || 0 : subtotalRaw || 0) +
+      (typeof taxRaw === "string" ? parseFloat(taxRaw) || 0 : taxRaw || 0)
+
+  const subtotal =
+    typeof subtotalRaw === "string" ? parseFloat(subtotalRaw) || 0 : subtotalRaw || 0
+  const tax = typeof taxRaw === "string" ? parseFloat(taxRaw) || 0 : taxRaw || 0
+  const total =
+    typeof grandRaw === "string" ? parseFloat(grandRaw) || 0 : grandRaw || 0
+
+  const payment = order?.payments || order?.payment || null
+  const paymentMethod =
+    payment?.payment_method || order?.payment_method || "PayPal"
+
+  const customerName =
+    order?.full_name || order?.customer_name || order?.name || ""
+  const customerEmail =
+    order?.email || order?.customer_email || order?.user_email || ""
+  const customerPhone =
+    order?.phone_number ||
+    order?.phone ||
+    order?.customer_phone ||
+    order?.contact_number ||
+    ""
+
+  const normalize = (v: any) =>
+    String(v ?? "")
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim()
+
+  const baseFullAddress =
+    order?.full_address || order?.shipping_address || order?.address
+  const extraParts = [
+    order?.city,
+    order?.state,
+    order?.pincode,
+    order?.country,
+  ].filter(Boolean)
+  const dedupedExtras = baseFullAddress
+    ? extraParts.filter((p: any) => !normalize(baseFullAddress).includes(normalize(p)))
+    : extraParts
+
+  const fullAddress =
+    [baseFullAddress, ...dedupedExtras]
+      .filter(Boolean)
+      .join(", ") ||
+    [
+      order?.address_line1,
+      order?.address_line2,
+      order?.address_line_1,
+      order?.address_line_2,
+      order?.city,
+      order?.state,
+      order?.pincode,
+      order?.country,
+    ]
+      .filter(Boolean)
+      .join(", ")
+
+  const handlePayWithPaypal = async () => {
+    if (!orderNumber) return
+
+    setLoading(true)
+    setError(null)
+    try {
+      const data: CreatePaymentResponse = await createPayment(orderNumber)
+      const paypalId = data.paypal_order_id
+      const approval = data.approval_url
+
+      if (!paypalId || !approval) {
+        throw new Error("Payment initialization failed. Missing PayPal data.")
+      }
+
+      setPaypalOrderId(paypalId)
+      setApprovalUrl(approval)
+
+      if (typeof window !== "undefined") {
+        try {
+          const knownOrderId =
+            typeof order?.id === "number" ? order.id : null
+
+          window.sessionStorage.setItem(
+            `paypal_order_${paypalId}`,
+            JSON.stringify({
+              order_number: orderNumber,
+              order_id: knownOrderId,
+              paypal_order_id: paypalId,
+            })
+          )
+        } catch {
+          // ignore storage failures
+        }
+      }
+
+      window.location.href = approval
+    } catch (err: any) {
+      console.error("[payment] Failed to create payment", err)
+      let message = "Failed to start payment. Please try again."
+      if (err instanceof APIError) {
+        message =
+          (err.data && (err.data.message || err.data.detail)) ||
+          err.message ||
+          message
+      } else if (typeof err?.message === "string") {
+        message = err.message
+      }
+      setError(message)
+      toast.error(message)
+    } finally {
+      setLoading(false)
     }
-    window.location.href = approvalUrl
+  }
+
+  if (orderLoading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-16 lg:px-8">
+        <div className="h-6 w-40 animate-pulse rounded bg-muted" />
+        <div className="mt-4 grid gap-8 lg:grid-cols-2">
+          <div className="h-48 rounded-lg bg-muted" />
+          <div className="h-48 rounded-lg bg-muted" />
+        </div>
+      </div>
+    )
+  }
+
+  if (orderError || !order) {
+    return (
+      <div className="mx-auto flex max-w-2xl flex-col items-center justify-center px-4 py-24 text-center lg:px-8">
+        <AlertTriangle className="h-10 w-10 text-destructive" />
+        <h1 className="mt-4 font-serif text-2xl font-bold text-foreground">
+          Unable to load order
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          {orderError || "We couldn&apos;t load the order details. Please try again from your orders page."}
+        </p>
+        <Button
+          type="button"
+          className="mt-6"
+          onClick={() => router.push("/account/orders")}
+        >
+          View My Orders
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -125,18 +247,20 @@ export function PaymentClient({ orderNumber }: PaymentClientProps) {
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="text-foreground">
-                  ${subtotal.toFixed(2)}
+                  {currency.format(subtotal || 0)}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Tax</span>
-                <span className="text-foreground">${tax.toFixed(2)}</span>
+                <span className="text-foreground">
+                  {currency.format(tax || 0)}
+                </span>
               </div>
               <Separator className="my-2" />
               <div className="flex items-center justify-between text-base font-semibold">
                 <span className="text-foreground">Total</span>
                 <span className="text-foreground">
-                  ${total.toFixed(2)}
+                  {currency.format(total || 0)}
                 </span>
               </div>
             </div>
@@ -173,7 +297,7 @@ export function PaymentClient({ orderNumber }: PaymentClientProps) {
               className="mt-4 w-full"
               size="lg"
               onClick={handlePayWithPaypal}
-              disabled={loading || !approvalUrl}
+              disabled={loading}
             >
               {loading ? "Preparing PayPal..." : "Pay with PayPal"}
             </Button>
@@ -184,115 +308,80 @@ export function PaymentClient({ orderNumber }: PaymentClientProps) {
           </div>
         </div>
 
-        {/* Right: Order review (only show cart-based summary when items are present) */}
-        {items.length > 0 && (
-          <div className="space-y-4">
-            <div className="rounded-lg border border-border bg-card p-6">
-              <h2 className="text-lg font-semibold text-foreground">
-                Billing Address
-              </h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                This address was provided during checkout.
-              </p>
+        {/* Right: Order review from backend order details */}
+        <div className="space-y-4">
+          <div className="rounded-lg border border-border bg-card p-6">
+            <h2 className="text-lg font-semibold text-foreground">
+              Billing Address
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              This address was loaded from your order details.
+            </p>
 
-              <div className="mt-4 space-y-1 text-sm text-foreground">
-                {typeof window !== "undefined" ? (
-                  <BillingAddressSummary orderNumber={orderNumber} />
-                ) : null}
-              </div>
+            <div className="mt-4 space-y-1 text-sm text-foreground">
+              {customerName && <p>{customerName}</p>}
+              {customerEmail && <p>{customerEmail}</p>}
+              {customerPhone && <p>{customerPhone}</p>}
+              {fullAddress && <p>{fullAddress}</p>}
             </div>
+          </div>
 
-            <div className="rounded-lg border border-border bg-card p-6">
-              <h2 className="text-lg font-semibold text-foreground">
-                Order Items
-              </h2>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Payment Method: <span className="font-medium">PayPal</span>
-              </p>
+          <div className="rounded-lg border border-border bg-card p-6">
+            <h2 className="text-lg font-semibold text-foreground">
+              Order Items
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Payment Method:{" "}
+              <span className="font-medium">{paymentMethod}</span>
+            </p>
 
-              <div className="mt-4 space-y-3 text-sm">
-                {items.map(item => (
+            <div className="mt-4 space-y-3 text-sm">
+              {items.map((item, idx) => {
+                const qty = item.quantity ?? 1
+                const priceRaw =
+                  item.book_price ??
+                  item.price ??
+                  item.unit_price ??
+                  0
+                const price =
+                  typeof priceRaw === "string"
+                    ? parseFloat(priceRaw)
+                    : priceRaw
+                const lineTotal =
+                  item.total ??
+                  (price || 0) *
+                    (typeof qty === "string" ? parseInt(qty, 10) : qty)
+                const book = item.book || item.product || {}
+                const title =
+                  book.title || item.book_title || item.title || "Book"
+
+                return (
                   <div
-                    key={item.book.id}
+                    key={idx}
                     className="flex items-center justify-between"
                   >
                     <div className="flex flex-col">
                       <span className="font-medium text-foreground">
-                        {item.book.title}
+                        {title}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        Quantity: {item.quantity}
+                        Quantity: {qty}
                       </span>
                     </div>
                     <span className="text-foreground">
-                      ${(item.book.price * item.quantity).toFixed(2)}
+                      {currency.format(
+                        typeof lineTotal === "string"
+                          ? parseFloat(lineTotal) || 0
+                          : lineTotal || 0
+                      )}
                     </span>
                   </div>
-                ))}
-              </div>
+                )
+              })}
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
 }
-
-function BillingAddressSummary({ orderNumber }: { orderNumber: string }) {
-  if (typeof window === "undefined") return null
-
-  let content: React.ReactNode = (
-    <p className="text-sm text-muted-foreground">
-      Address details unavailable. Your order will use the address you provided
-      during checkout.
-    </p>
-  )
-
-  try {
-    const raw = window.sessionStorage.getItem(`checkout_order_${orderNumber}`)
-    if (raw) {
-      const parsed = JSON.parse(raw) as {
-        form?: {
-          first_name?: string
-          last_name?: string
-          email?: string
-          phone_number?: string
-          address_line_1?: string
-          address_line_2?: string
-          city?: string
-          state?: string
-          pincode?: string
-          country?: string
-        }
-      }
-      const f = parsed.form || {}
-      const fullName = [f.first_name, f.last_name].filter(Boolean).join(" ")
-      const lines = [
-        fullName,
-        f.email,
-        f.phone_number,
-        f.address_line_1,
-        f.address_line_2,
-        [f.city, f.state, f.pincode].filter(Boolean).join(", "),
-        f.country,
-      ].filter(Boolean)
-
-      if (lines.length) {
-        content = (
-          <div className="space-y-0.5">
-            {lines.map((line, idx) => (
-              <p key={idx} className="text-sm text-foreground">
-                {line}
-              </p>
-            ))}
-          </div>
-        )
-      }
-    }
-  } catch {
-    // ignore parse errors
-  }
-
-  return <>{content}</>
-}
-
