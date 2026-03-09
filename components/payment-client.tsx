@@ -140,6 +140,11 @@ export function PaymentClient({ orderNumber }: PaymentClientProps) {
       .filter(Boolean)
       .join(", ")
 
+  const orderNoteRaw =
+    order?.order_note ?? order?.orderNote ?? order?.note ?? order?.notes
+  const orderNote =
+    typeof orderNoteRaw === "string" ? orderNoteRaw.trim() : ""
+
   const handlePayWithPaypal = async () => {
     if (!orderNumber) return
 
@@ -328,6 +333,17 @@ export function PaymentClient({ orderNumber }: PaymentClientProps) {
               {customerPhone && <p>{customerPhone}</p>}
               {fullAddress && <p>{fullAddress}</p>}
             </div>
+
+            {orderNote && (
+              <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Order Note
+                </p>
+                <p className="mt-1 whitespace-pre-line text-sm text-foreground">
+                  {orderNote}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="rounded-lg border border-border bg-card p-6">

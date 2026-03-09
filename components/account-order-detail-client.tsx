@@ -102,6 +102,10 @@ export function AccountOrderDetailClient() {
       .filter(Boolean)
       .join(", ") ||
     "—"
+  const orderNoteRaw =
+    order.order_note ?? order.orderNote ?? order.note ?? order.notes
+  const orderNote =
+    typeof orderNoteRaw === "string" ? orderNoteRaw.trim() : ""
 
   const subtotalRaw =
     order.subtotal ??
@@ -232,6 +236,16 @@ export function AccountOrderDetailClient() {
                 </dd>
               </div>
             </dl>
+            {orderNote && (
+              <div className="mt-3 rounded-md border border-border bg-muted/30 p-3">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Order Note
+                </p>
+                <p className="mt-1 whitespace-pre-line text-sm text-foreground">
+                  {orderNote}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
