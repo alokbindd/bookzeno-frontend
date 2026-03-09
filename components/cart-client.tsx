@@ -57,7 +57,7 @@ export function CartClient() {
                     sizes="80px"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement
-                      target.src = "/images/placeholder.jpg"
+                      target.src = "https://placehold.co/80x112?text=No+Cover"
                     }}
                   />
                 ) : (

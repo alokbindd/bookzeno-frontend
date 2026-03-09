@@ -8,11 +8,13 @@ export const metadata: Metadata = {
 }
 
 interface SearchPageProps {
-  searchParams: { q?: string }
+  searchParams: Promise<{ q?: string | string[] }>
 }
 
-export default function SearchPage({ searchParams }: SearchPageProps) {
-  const initialQuery = typeof searchParams.q === "string" ? searchParams.q : ""
+export default async function SearchPage({ searchParams }: SearchPageProps) {
+  const { q } = await searchParams
+  const initialQuery =
+    typeof q === "string" ? q : Array.isArray(q) ? q[0] ?? "" : ""
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
