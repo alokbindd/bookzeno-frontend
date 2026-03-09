@@ -1,5 +1,4 @@
 // TypeScript interfaces for API responses
-// All actual data is now fetched from the live API at http://13.201.84.104/
 
 import { getCategories as fetchCategories, getBooksByCategory as fetchBooksByCategory } from "@/lib/api"
 

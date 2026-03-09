@@ -69,7 +69,7 @@ export async function apiFetch(
   
   // On the server, fetch requires absolute URLs
   if (typeof window === "undefined") {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL
     url = `${baseUrl}${url}`
   }
 

@@ -3,6 +3,7 @@ import { Footer } from "@/components/footer"
 import { BooksPageClient } from "@/components/books-page-client"
 import { getBooks, getCategories } from "@/lib/api"
 import type { Book, Category, PaginatedResponse } from "@/lib/data"
+export const dynamic = "force-dynamic"
 
 export default async function AllBooksPage() {
   // Load only the first page initially for performance
