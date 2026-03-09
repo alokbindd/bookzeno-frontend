@@ -512,7 +512,7 @@ export function BookDetailClient({
                 <div className={formLocked ? "cursor-not-allowed" : "pointer-events-auto"}>
                   {formLocked ? (
                     <Button type="button" disabled className="mt-2 cursor-not-allowed">
-                      Submit Review (disabled)
+                      Submit Review
                     </Button>
                   ) : (
                     <Button type="submit" disabled={submitting} className="mt-2">
