@@ -13,12 +13,16 @@ export function BookCard({ book }: { book: Book }) {
   const handleAddToCart = async () => {
     try {
       if (!book.id) {
-        console.error("[v0] Missing book id for cart add", book)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Missing book id for cart add", book)
+        }
         return
       }
       await addToCart(book.id, 1)
     } catch (error) {
-      console.error("[v0] Failed to add to cart", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error(" Failed to add to cart", error)
+      }
     }
   }
 

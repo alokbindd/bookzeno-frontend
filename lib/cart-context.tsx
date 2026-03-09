@@ -47,7 +47,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const loadCart = async () => {
       try {
-        console.log("[v0] Cart: initial loadCart()")
         const response = await getCart()
         const raw =
           Array.isArray(response) && response ||
@@ -103,7 +102,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         })
         setItems(cartItems)
       } catch (error) {
-        console.error("[v0] Failed to load cart", error)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Failed to load cart", error)
+        }
       } finally {
         setLoading(false)
       }
@@ -114,7 +115,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const refreshCart = async () => {
     try {
-      console.log("[v0] Cart: refreshCart()")
       const response = await getCart()
       const raw =
         Array.isArray(response) && response ||
@@ -170,13 +170,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       })
       setItems(cartItems)
     } catch (error) {
-      console.error("[v0] Failed to refresh cart", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error(" Failed to refresh cart", error)
+      }
     }
   }
 
   const addToCart = async (bookId: number, quantity: number = 1) => {
     try {
-      console.log("[v0] Cart: addToCart()", { bookId, quantity })
       await apiAddToCart(bookId, quantity)
       await refreshCart()
     } catch (error) {
@@ -185,7 +186,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
           window.alert("Not enough stock available")
         }
       } else {
-        console.error("[v0] Failed to add to cart", error)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Failed to add to cart", error)
+        }
       }
       throw error
     }
@@ -193,18 +196,18 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const removeFromCart = async (bookId: number) => {
     try {
-      console.log("[v0] Cart: removeFromCart()", { bookId })
       await apiRemoveFromCart(bookId)
       await refreshCart()
     } catch (error) {
-      console.error("[v0] Failed to remove from cart", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error(" Failed to remove from cart", error)
+      }
       throw error
     }
   }
 
   const updateQuantity = async (bookId: number, quantity: number) => {
     try {
-      console.log("[v0] Cart: updateQuantity()", { bookId, quantity })
       const existing = items.find((item) => item.book.id === bookId)
       if (!existing) {
         await refreshCart()
@@ -226,24 +229,26 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       }
       await refreshCart()
     } catch (error) {
-      console.error("[v0] Failed to update quantity", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error(" Failed to update quantity", error)
+      }
       throw error
     }
   }
 
   const clearCart = async () => {
     try {
-      console.log("[v0] Cart: clearCart()")
       await apiClearCart()
       setItems([])
     } catch (error) {
-      console.error("[v0] Failed to clear cart", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error(" Failed to clear cart", error)
+      }
       throw error
     }
   }
 
   const resetCartState = () => {
-    console.log("[v0] Cart: resetCartState() - clearing local items only")
     setItems([])
   }
 

@@ -22,7 +22,9 @@ export function AllBooks() {
         }))
         setBooks(normalizedBooks)
       } catch (error) {
-        console.error("[v0] Failed to load books", error)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Failed to load books", error)
+        }
       } finally {
         setLoading(false)
       }

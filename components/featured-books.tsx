@@ -22,7 +22,9 @@ export function FeaturedBooks() {
         // Get first 4 books as featured
         setBooks(normalizedBooks.slice(0, 4))
       } catch (error) {
-        console.error("[v0] Failed to load featured books", error)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Failed to load featured books", error)
+        }
       } finally {
         setLoading(false)
       }

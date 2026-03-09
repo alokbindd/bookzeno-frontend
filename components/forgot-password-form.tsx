@@ -31,7 +31,9 @@ export function ForgotPasswordForm() {
         toast.error(data.message || "Failed to send reset email.")
       }
     } catch (error: any) {
-      console.error("Forgot password error:", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Forgot password error:", error)
+      }
       toast.error("Failed to send reset email.")
     } finally {
       setLoading(false)

@@ -64,7 +64,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setStoredUser(userData.data)
           }
         } catch (error) {
-          console.error("[v0] Failed to fetch user", error)
+          if (process.env.NODE_ENV !== "production") {
+            console.error(" Failed to fetch user", error)
+          }
           // Don't clear tokens on refresh for non-auth failures (missing /me endpoint, backend down, etc.)
           const status = (error as any)?.status
           if (status === 401 || status === 403) {
@@ -90,12 +92,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Merge guest cart with user cart
       try {
-        console.log("[v0] Auth: merging cart after login")
         await mergeCart()
-        console.log("[v0] Auth: merge complete, refreshing cart")
         await refreshCart()
       } catch (mergeError) {
-        console.warn("[v0] Cart merge failed:", mergeError)
+        console.warn(" Cart merge failed:", mergeError)
         // Don't fail login if cart merge fails
       }
 
@@ -129,10 +129,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Clear local cart state and re-sync guest cart
       resetCartState()
       try {
-        console.log("[v0] Auth: refreshing cart after logout")
         await refreshCart()
       } catch (error) {
-        console.error("[v0] Failed to refresh cart after logout", error)
       }
     }
   }
@@ -146,7 +144,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(userData.data)
         }
       } catch (error) {
-        console.error("[v0] Failed to refresh user", error)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Failed to refresh user", error)
+        }
       }
     }
   }

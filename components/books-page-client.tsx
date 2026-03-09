@@ -46,7 +46,9 @@ export function BooksPageClient({ initialData, categories }: BooksPageClientProp
       })
       setCurrentPage(page)
     } catch (error) {
-      console.error("[v0] Failed to load books page", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error(" Failed to load books page", error)
+      }
     } finally {
       setLoading(false)
     }
@@ -80,7 +82,9 @@ export function BooksPageClient({ initialData, categories }: BooksPageClientProp
       })
       setCurrentPage(1)
     } catch (error) {
-      console.error("[v0] Failed to load books by category", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error(" Failed to load books by category", error)
+      }
     } finally {
       setLoading(false)
     }

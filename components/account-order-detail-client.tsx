@@ -19,7 +19,9 @@ export function AccountOrderDetailClient() {
         const data = await getOrderByNumber(orderNumber)
         setOrder((data as any).data ?? data)
       } catch (error) {
-        console.error("[account] Failed to load order detail", error)
+        if (process.env.NODE_ENV !== "production") {
+          console.error("[account] Failed to load order detail", error)
+        }
       } finally {
         setLoading(false)
       }

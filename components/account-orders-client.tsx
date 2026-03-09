@@ -26,7 +26,9 @@ export function AccountOrdersClient() {
           (Array.isArray(res) ? res : [])
         setOrders(list || [])
       } catch (error) {
-        console.error("[account] Failed to load orders", error)
+        if (process.env.NODE_ENV !== "production") {
+          console.error("[account] Failed to load orders", error)
+        }
       } finally {
         setLoading(false)
       }

@@ -44,7 +44,9 @@ export function RegisterForm() {
       toast.success("Registration successful. Please check your email to activate your account.")
       router.push("/login")
     } catch (error: any) {
-      console.error("Registration error:", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Registration error:", error)
+      }
       let message = "Registration failed. Please try again."
 
       const data = (error && (error as any).data) || {}

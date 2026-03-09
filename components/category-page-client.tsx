@@ -231,7 +231,7 @@ export function CategoryPageClient({
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {siblingCategories.map((cat) => {
-              const CatIcon = iconMap[cat.icon] || BookOpen
+              const CatIcon = cat.icon ? (iconMap[cat.icon] ?? BookOpen) : BookOpen
               return (
                 <Link
                   key={cat.slug}

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
   Search,
@@ -27,7 +27,22 @@ import { useAuth } from "@/lib/auth-context"
 import { getCategories } from "@/lib/api"
 import { Category } from "@/lib/data"
 
-export function Navbar() {
+function NavbarFallback() {
+  return (
+    <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 lg:px-8">
+        <Link href="/" className="flex items-center gap-2">
+          <BookOpen className="h-7 w-7 text-primary" />
+          <span className="text-xl font-bold tracking-tight text-foreground font-serif">
+            Bookzeno
+          </span>
+        </Link>
+      </div>
+    </header>
+  )
+}
+
+function NavbarInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -40,7 +55,6 @@ export function Navbar() {
     const loadCategories = async () => {
       try {
         const categoriesData = await getCategories()
-        console.log("[v0] Categories data received:", categoriesData)
         
         if (Array.isArray(categoriesData)) {
           setCategories(categoriesData)
@@ -49,11 +63,12 @@ export function Navbar() {
         } else if (categoriesData?.results && Array.isArray(categoriesData.results)) {
           setCategories(categoriesData.results)
         } else {
-          console.log("[v0] Unexpected category response format:", categoriesData)
           setCategories([])
         }
       } catch (error) {
-        console.error("[v0] Failed to load categories:", error)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Failed to load categories:", error)
+        }
         setCategories([])
       }
     }
@@ -325,5 +340,13 @@ export function Navbar() {
         </div>
       )}
     </header>
+  )
+}
+
+export function Navbar() {
+  return (
+    <Suspense fallback={<NavbarFallback />}>
+      <NavbarInner />
+    </Suspense>
   )
 }

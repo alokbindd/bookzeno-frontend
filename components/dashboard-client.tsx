@@ -46,7 +46,9 @@ export function DashboardClient() {
           setOrders(ordersData)
         }
       } catch (error) {
-        console.error("Failed to fetch orders:", error)
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to fetch orders:", error)
+        }
       } finally {
         setLoading(false)
       }

@@ -73,7 +73,9 @@ export async function getBooksByCategory(slug: string): Promise<Book[]> {
     const data = await fetchBooksByCategory(slug)
     return Array.isArray(data) ? data : []
   } catch (error) {
-    console.error("[v0] Failed to get books by category:", error)
+    if (process.env.NODE_ENV !== "production") {
+      console.error(" Failed to get books by category:", error)
+    }
     return []
   }
 }

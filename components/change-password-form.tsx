@@ -53,7 +53,9 @@ export function ChangePasswordForm() {
         toast.error(message)
       }
     } catch (error: any) {
-      console.error("Change password error:", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Change password error:", error)
+      }
       toast.error(error.message || "Failed to change password.")
     } finally {
       setLoading(false)

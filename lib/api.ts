@@ -89,28 +89,28 @@ export async function apiFetch(
   }
 
   try {
-    console.log("[v0] API Request:", { url, method: options.method || "GET" })
     const response = await fetch(url, {
       ...options,
       headers: Object.fromEntries(headers.entries()),
       credentials: "include", // For session-based cart persistence
     })
 
-    console.log("[v0] API Response:", { status: response.status, url })
-
     // Handle token expiration
     if (response.status === 401 && token && retryCount === 0) {
-      console.log("[v0] Token expired, attempting refresh...")
       try {
         await refreshAccessToken()
         // Retry the request with the new token
         return apiFetch(endpoint, options, retryCount + 1)
       } catch (refreshError) {
-        console.error("[v0] Token refresh failed:", refreshError)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Token refresh failed:", refreshError)
+        }
         // Clear tokens and throw original error
         clearAuthTokens()
         const error = new APIError("Session expired. Please log in again.", 401, {})
-        console.error("[v0] API Error:", { status: 401, message: error.message })
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" API Error:", { status: 401, message: error.message })
+        }
         throw error
       }
     }
@@ -125,7 +125,9 @@ export async function apiFetch(
       try {
         responseText = await response.text()
       } catch (textError) {
-        console.error("[v0] Failed to read response text:", textError)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Failed to read response text:", textError)
+        }
       }
 
       if (responseText && contentType && contentType.includes("application/json")) {
@@ -133,8 +135,10 @@ export async function apiFetch(
           errorData = JSON.parse(responseText)
           errorMessage = errorData.message || errorData.detail || errorData.error || `HTTP ${response.status}`
         } catch (parseError) {
-          console.error("[v0] Failed to parse error response as JSON:", parseError)
-          console.error("[v0] Response text was:", responseText)
+          if (process.env.NODE_ENV !== "production") {
+            console.error(" Failed to parse error response as JSON:", parseError)
+            console.error(" Response text was:", responseText)
+          }
           errorMessage = "Invalid response format from server"
           errorData = { message: errorMessage }
         }
@@ -142,7 +146,12 @@ export async function apiFetch(
         // Non-JSON response (like HTML error page)
         errorMessage = responseText || `HTTP ${response.status}`
         errorData = { message: errorMessage }
-        console.error("[v0] Non-JSON error response:", { status: response.status, text: responseText.substring(0, 200) })
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Non-JSON error response:", {
+            status: response.status,
+            text: responseText.substring(0, 200),
+          })
+        }
       } else {
         // Empty response body
         errorMessage = `HTTP ${response.status} Error`
@@ -150,13 +159,15 @@ export async function apiFetch(
       }
 
       if (response.status !== 404) {
-        console.error("[v0] API Error:", { 
-          status: response.status, 
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" API Error:", {
+            status: response.status,
           endpoint,
           message: errorMessage,
           errorData,
           responseText: responseText.substring(0, 200)
-        })
+          })
+        }
       }
       
       const error = new APIError(errorMessage, response.status, errorData)
@@ -171,7 +182,9 @@ export async function apiFetch(
       try {
         data = await response.json()
       } catch (parseError) {
-        console.error("[v0] Failed to parse success response as JSON:", parseError)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Failed to parse success response as JSON:", parseError)
+        }
         data = {}
       }
     } else {
@@ -185,14 +198,18 @@ export async function apiFetch(
     // Re-throw APIError as-is
     if (error instanceof APIError) {
       if (error.status !== 404) {
-        console.error("[v0] API Fetch Error:", { endpoint, message: error.message })
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" API Fetch Error:", { endpoint, message: error.message })
+        }
       }
       throw error
     }
     
     // Handle other errors
     const message = error?.message || "Unknown error"
-    console.error("[v0] API Fetch Error:", { endpoint, message })
+    if (process.env.NODE_ENV !== "production") {
+      console.error(" API Fetch Error:", { endpoint, message })
+    }
     throw new APIError(message, error?.status || 500, error)
   }
 }
@@ -250,24 +267,21 @@ export async function getCategories() {
   try {
     // Use the proxy endpoint to avoid CORS issues
     const data = await apiFetch("api/category/")
-    console.log("[v0] Categories response:", data)
     
     // Handle different response formats
     if (Array.isArray(data)) {
-      console.log("[v0] Categories is an array")
       return data
     } else if (data?.results && Array.isArray(data.results)) {
-      console.log("[v0] Categories has results array")
       return data.results
     } else if (data?.data && Array.isArray(data.data)) {
-      console.log("[v0] Categories has data array")
       return data.data
     } else {
-      console.log("[v0] Unexpected category format:", data)
       return []
     }
   } catch (error: any) {
-    console.error("[v0] Failed to fetch categories:", error)
+    if (process.env.NODE_ENV !== "production") {
+      console.error(" Failed to fetch categories:", error)
+    }
     return []
   }
 }
@@ -275,7 +289,6 @@ export async function getCategories() {
 export async function getBooksByCategory(categorySlug: string) {
   try {
     const data = await apiFetch(`api/category/${categorySlug}/`)
-    console.log("[v0] Books for category:", categorySlug, data)
     
     // Handle different response formats
     if (Array.isArray(data)) {
@@ -290,7 +303,9 @@ export async function getBooksByCategory(categorySlug: string) {
       return []
     }
   } catch (error: any) {
-    console.error("[v0] Failed to fetch books by category:", error)
+    if (process.env.NODE_ENV !== "production") {
+      console.error(" Failed to fetch books by category:", error)
+    }
     return []
   }
 }

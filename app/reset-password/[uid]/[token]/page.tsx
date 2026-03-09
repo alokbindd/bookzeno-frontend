@@ -42,7 +42,9 @@ export default function ResetPasswordPage({ params }: ResetPasswordPageProps) {
         toast.error(data.message || "Password reset failed.")
       }
     } catch (error: any) {
-      console.error("Reset password error:", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Reset password error:", error)
+      }
       toast.error("Password reset failed.")
     } finally {
       setLoading(false)

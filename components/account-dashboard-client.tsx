@@ -26,7 +26,9 @@ export function AccountDashboardClient() {
         const payload = (res as any).data ?? res
         setData(payload as DashboardData)
       } catch (error) {
-        console.error("[account] Failed to load dashboard", error)
+        if (process.env.NODE_ENV !== "production") {
+          console.error("[account] Failed to load dashboard", error)
+        }
       } finally {
         setLoading(false)
       }

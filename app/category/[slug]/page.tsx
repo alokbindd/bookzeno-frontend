@@ -11,7 +11,9 @@ export async function generateStaticParams() {
     const categories = await getCategories()
     return categories.map((cat: Category) => ({ slug: cat.slug }))
   } catch (error) {
-    console.error("[v0] Failed to generate static params:", error)
+    if (process.env.NODE_ENV !== "production") {
+      console.error(" Failed to generate static params:", error)
+    }
     return []
   }
 }
@@ -79,7 +81,9 @@ export default async function CategoryPage({
       </div>
     )
   } catch (error) {
-    console.error("[v0] Error loading category:", error)
+    if (process.env.NODE_ENV !== "production") {
+      console.error(" Error loading category:", error)
+    }
     notFound()
   }
 }

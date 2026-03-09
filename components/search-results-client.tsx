@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { BookCard } from "@/components/book-card"
 import type { Book } from "@/lib/data"
@@ -10,7 +10,7 @@ interface SearchResultsClientProps {
   initialQuery: string
 }
 
-export function SearchResultsClient({ initialQuery }: SearchResultsClientProps) {
+function SearchResultsInner({ initialQuery }: SearchResultsClientProps) {
   const searchParams = useSearchParams()
   const [query, setQuery] = useState(initialQuery)
   const [books, setBooks] = useState<Book[]>([])
@@ -39,7 +39,9 @@ export function SearchResultsClient({ initialQuery }: SearchResultsClientProps) 
         }))
         setBooks(normalized)
       } catch (err: any) {
-        console.error("[v0] Failed to search books", err)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Failed to search books", err)
+        }
         setError(
           typeof err?.message === "string"
             ? err.message
@@ -101,6 +103,14 @@ export function SearchResultsClient({ initialQuery }: SearchResultsClientProps) 
         </div>
       )}
     </section>
+  )
+}
+
+export function SearchResultsClient(props: SearchResultsClientProps) {
+  return (
+    <Suspense fallback={null}>
+      <SearchResultsInner {...props} />
+    </Suspense>
   )
 }
 

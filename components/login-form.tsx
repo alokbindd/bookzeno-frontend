@@ -36,7 +36,9 @@ export function LoginForm() {
       toast.success("Login successful!")
       router.push("/")
     } catch (error: any) {
-      console.error("Login error:", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Login error:", error)
+      }
       let message = "Login failed. Please check your credentials."
 
       const data = (error && (error as any).data) || {}

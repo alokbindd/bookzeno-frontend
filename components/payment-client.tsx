@@ -46,7 +46,9 @@ export function PaymentClient({ orderNumber }: PaymentClientProps) {
           router.replace(`/account/orders/${orderNumber}`)
         }
       } catch (err: any) {
-        console.error("[payment] Failed to load order", err)
+        if (process.env.NODE_ENV !== "production") {
+          console.error("[payment] Failed to load order", err)
+        }
         let message = "Failed to load order details. Please try again."
         if (err instanceof APIError) {
           message =
@@ -175,7 +177,9 @@ export function PaymentClient({ orderNumber }: PaymentClientProps) {
 
       window.location.href = approval
     } catch (err: any) {
-      console.error("[payment] Failed to create payment", err)
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[payment] Failed to create payment", err)
+      }
       let message = "Failed to start payment. Please try again."
       if (err instanceof APIError) {
         message =

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { AlertTriangle, Loader2 } from "lucide-react"
 import { toast } from "sonner"
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { useCart } from "@/lib/cart-context"
 import { APIError, capturePayment, CapturePaymentResponse } from "@/lib/api"
 
-export function PaymentCallbackClient() {
+function PaymentCallbackInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { clearCart } = useCart()
@@ -85,7 +85,9 @@ export function PaymentCallbackClient() {
 
         router.replace(`/order-success/${redirectIdentifier}`)
       } catch (err: any) {
-        console.error("[payment] Failed to capture payment", err)
+        if (process.env.NODE_ENV !== "production") {
+          console.error("[payment] Failed to capture payment", err)
+        }
         let message = "Failed to capture payment. Please try again."
         if (err instanceof APIError) {
           message =
@@ -149,5 +151,13 @@ export function PaymentCallbackClient() {
   }
 
   return null
+}
+
+export function PaymentCallbackClient() {
+  return (
+    <Suspense fallback={null}>
+      <PaymentCallbackInner />
+    </Suspense>
+  )
 }
 

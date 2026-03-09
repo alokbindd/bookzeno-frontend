@@ -85,7 +85,9 @@ export function CheckoutClient() {
           country: profile.country ?? prev.country,
         }))
       } catch (error) {
-        console.error("[checkout] Failed to load user profile", error)
+        if (process.env.NODE_ENV !== "production") {
+          console.error("[checkout] Failed to load user profile", error)
+        }
       }
     }
 
@@ -162,7 +164,9 @@ export function CheckoutClient() {
 
       router.push(`/payment/${orderNumber}`)
     } catch (error: any) {
-      console.error("[checkout] Failed to place order", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[checkout] Failed to place order", error)
+      }
       let message = "Failed to place order. Please try again."
       if (error instanceof APIError) {
         message =

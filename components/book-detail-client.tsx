@@ -166,12 +166,16 @@ export function BookDetailClient({
     try {
       setLoading(true)
       if (!book.id) {
-        console.error("[v0] Missing book id for cart add", book)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Missing book id for cart add", book)
+        }
         return
       }
       await addToCart(book.id, quantity)
     } catch (error) {
-      console.error("[v0] Failed to add to cart", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error(" Failed to add to cart", error)
+      }
     } finally {
       setLoading(false)
     }
@@ -227,7 +231,9 @@ export function BookDetailClient({
       if (error instanceof APIError && error.status === 403) {
         setPurchaseRequired(true)
       } else {
-        console.error("[v0] Error submitting review", error)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Error submitting review", error)
+        }
       }
     } finally {
       setSubmitting(false)

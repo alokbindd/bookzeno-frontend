@@ -50,7 +50,6 @@ export function CategorySection() {
     const loadCategories = async () => {
       try {
         const categoriesData = await getCategories()
-        console.log("[v0] Categories data received:", categoriesData)
         
         if (Array.isArray(categoriesData)) {
           setCategories(categoriesData)
@@ -59,11 +58,12 @@ export function CategorySection() {
         } else if (categoriesData?.results && Array.isArray(categoriesData.results)) {
           setCategories(categoriesData.results)
         } else {
-          console.log("[v0] Unexpected category response format:", categoriesData)
           setCategories([])
         }
       } catch (error) {
-        console.error("[v0] Failed to load categories:", error)
+        if (process.env.NODE_ENV !== "production") {
+          console.error(" Failed to load categories:", error)
+        }
         setCategories([])
       } finally {
         setLoading(false)

@@ -58,7 +58,9 @@ export function AccountProfileClient() {
       setProfile(normalized)
       setOriginalProfile(normalized)
     } catch (error) {
-      console.error("[account] Failed to load profile", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[account] Failed to load profile", error)
+      }
       setErrorMessage("Failed to load profile. Please try again.")
     } finally {
       setLoading(false)
@@ -165,7 +167,9 @@ export function AccountProfileClient() {
       setProfilePicturePreview(null)
       await loadProfile()
     } catch (error: any) {
-      console.error("[account] Failed to update profile", error)
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[account] Failed to update profile", error)
+      }
       const errData = error?.data ?? {}
       const apiErrors = (typeof errData.errors === "object" ? errData.errors : null) ?? errData
       const fieldErrors: Record<string, string> = {}
