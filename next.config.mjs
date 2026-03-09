@@ -4,30 +4,16 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   images: {
-    unoptimized: true,
     remotePatterns: [
       {
-        protocol: 'http',
-        hostname: '13.201.84.104',
-        port: '',
-        pathname: '/**',
+        protocol: "http",
+        hostname: "13.201.84.104",
+        pathname: "/**",
       },
       {
-        protocol: 'https',
-        hostname: '13.201.84.104',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: '**',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "bookzeno-s3.s3.amazonaws.com",
+        pathname: "/**",
       },
     ],
   },
