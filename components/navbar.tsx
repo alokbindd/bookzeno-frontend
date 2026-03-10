@@ -12,6 +12,8 @@ import {
   BookOpen,
   ChevronDown,
   LogOut,
+  Moon,
+  Sun,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,6 +28,7 @@ import { useCart } from "@/lib/cart-context"
 import { useAuth } from "@/lib/auth-context"
 import { getCategories } from "@/lib/api"
 import { Category } from "@/lib/data"
+import { useTheme } from "next-themes"
 
 function NavbarFallback() {
   return (
@@ -50,6 +53,8 @@ function NavbarInner() {
   const [searchTerm, setSearchTerm] = useState("")
   const { totalItems } = useCart()
   const { isAuthenticated, user, logout } = useAuth()
+  const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -80,6 +85,10 @@ function NavbarInner() {
     const q = searchParams.get("q") ?? ""
     setSearchTerm(q)
   }, [searchParams])
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const handleSearch = () => {
     const term = searchTerm.trim()
@@ -140,21 +149,21 @@ function NavbarInner() {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
-              className="w-56 border border-border bg-white text-gray-900 shadow-lg"
+              className="w-56 border border-border bg-popover text-popover-foreground shadow-lg"
             >
               {categories.length === 0 ? (
-                <div className="px-3 py-2 text-xs text-gray-500">
+                <div className="px-3 py-2 text-xs text-muted-foreground">
                   Loading categories...
                 </div>
               ) : (
                 <>
                   <DropdownMenuItem
-                    className="p-0 focus:bg-gray-100 focus:text-gray-900"
+                    className="p-0 focus:bg-accent focus:text-accent-foreground"
                     asChild
                   >
                     <Link
                       href="/"
-                      className="block w-full cursor-pointer px-3 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100"
+                      className="block w-full cursor-pointer px-3 py-2 text-sm font-semibold text-popover-foreground hover:bg-accent"
                     >
                       All Books
                     </Link>
@@ -163,12 +172,12 @@ function NavbarInner() {
                   {categories.map((cat) => (
                     <DropdownMenuItem
                       key={cat.slug}
-                      className="p-0 focus:bg-gray-100 focus:text-gray-900"
+                      className="p-0 focus:bg-accent focus:text-accent-foreground"
                       asChild
                     >
                       <Link
                         href={`/category/${cat.slug}`}
-                        className="block w-full cursor-pointer px-3 py-2 text-sm text-gray-800 hover:bg-gray-100"
+                        className="block w-full cursor-pointer px-3 py-2 text-sm text-popover-foreground/90 hover:bg-accent"
                       >
                         {cat.category_name || cat.name || "Category"}
                       </Link>
@@ -178,6 +187,7 @@ function NavbarInner() {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
+
 
           {isAuthenticated && user ? (
             <>
@@ -230,10 +240,40 @@ function NavbarInner() {
               )}
             </Link>
           </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Toggle theme"
+            onClick={() =>
+              setTheme(resolvedTheme === "dark" ? "light" : "dark")
+            }
+          >
+            {mounted && resolvedTheme === "dark" ? (
+              <Sun className="h-4 w-4" />
+            ) : (
+              <Moon className="h-4 w-4" />
+            )}
+          </Button>
         </nav>
 
         {/* Mobile Menu Toggle */}
         <div className="flex items-center gap-2 md:hidden">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Toggle theme"
+            onClick={() =>
+              setTheme(resolvedTheme === "dark" ? "light" : "dark")
+            }
+          >
+            {mounted && resolvedTheme === "dark" ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+          </Button>
           <Button variant="ghost" size="icon" asChild className="relative">
             <Link href="/cart">
               <ShoppingCart className="h-5 w-5" />
