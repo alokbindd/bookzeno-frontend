@@ -5,7 +5,7 @@ import { Footer } from "@/components/footer"
 import { CategoryPageClient } from "@/components/category-page-client"
 import { getCategories, getBooksByCategory } from "@/lib/api"
 import type { Book, Category } from "@/lib/data"
-
+export const dynamic = "force-dynamic";
 export async function generateStaticParams() {
   try {
     const categories = await getCategories()

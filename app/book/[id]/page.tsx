@@ -3,7 +3,7 @@ import { getBookBySlug, getBookReviews } from "@/lib/api"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { BookDetailClient } from "@/components/book-detail-client"
-
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
   // Return empty array - will use dynamic rendering
