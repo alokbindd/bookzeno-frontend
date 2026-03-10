@@ -12,10 +12,10 @@ export function HeroSection() {
           src="/images/hero-books.jpg"
           alt=""
           fill
-          className="object-cover opacity-40"
+          className="object-cover opacity-40 dark:opacity-100"
           priority
         />
-        <div className="absolute inset-0 bg-foreground/40" />
+        <div className="absolute inset-0 bg-foreground/10 dark:bg-black/60" />
       </div>
 
       <div className="relative mx-auto flex max-w-7xl flex-col items-center px-4 py-20 text-center lg:px-8 lg:py-32">
