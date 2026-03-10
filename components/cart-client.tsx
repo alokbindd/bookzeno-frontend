@@ -2,13 +2,25 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useCart } from "@/lib/cart-context"
+import { useAuth } from "@/lib/auth-context"
 
 export function CartClient() {
   const { items, updateQuantity, removeFromCart, subtotal, tax, total, loading } = useCart()
+  const { isAuthenticated } = useAuth()
+  const router = useRouter()
+
+  const handleProceedToCheckout = () => {
+    if (!isAuthenticated) {
+      router.push("/login?redirect=/checkout")
+      return
+    }
+    router.push("/checkout")
+  }
 
   if (items.length === 0) {
     return (
@@ -164,8 +176,14 @@ export function CartClient() {
             </div>
           </div>
 
-          <Button asChild className="mt-6 w-full" size="lg" disabled={loading}>
-            <Link href="/checkout">Proceed to Checkout</Link>
+          <Button
+            className="mt-6 w-full"
+            size="lg"
+            disabled={loading}
+            type="button"
+            onClick={handleProceedToCheckout}
+          >
+            Proceed to Checkout
           </Button>
 
           <Button

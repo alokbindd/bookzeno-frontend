@@ -26,6 +26,7 @@ export function BooksPageClient({ initialData, categories }: BooksPageClientProp
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined)
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined)
   const [sortBy, setSortBy] = useState<SortOption>("price-low")
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   // Fetch books for a given page (all-books mode)
   const fetchPage = async (page: number) => {
@@ -143,7 +144,7 @@ export function BooksPageClient({ initialData, categories }: BooksPageClientProp
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-10 lg:px-8">
-      <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+      <div className="mb-4 flex flex-col gap-3 md:mb-8 md:flex-row md:items-end md:justify-between">
         <div>
           <h1 className="font-serif text-3xl font-bold text-foreground md:text-4xl">
             All Books
@@ -155,24 +156,36 @@ export function BooksPageClient({ initialData, categories }: BooksPageClientProp
             {pageData.count.toLocaleString()} books available
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-muted-foreground">Sort by:</label>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="h-9 rounded-md border border-border bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+
+        {/* Sort / Filter actions */}
+        <div className="flex items-center justify-between gap-3 md:justify-end">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Sort</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortOption)}
+              className="h-9 rounded-md border border-border bg-background px-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="price-low">Price Low → High</option>
+              <option value="price-high">Price High → Low</option>
+              <option value="rating">Rating</option>
+              <option value="newest">Newest</option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-1.5 text-sm text-foreground shadow-sm md:hidden"
+            onClick={() => setFiltersOpen(true)}
           >
-            <option value="price-low">Price Low → High</option>
-            <option value="price-high">Price High → Low</option>
-            <option value="rating">Rating</option>
-            <option value="newest">Newest</option>
-          </select>
+            Filter
+          </button>
         </div>
       </div>
 
       <div className="flex flex-col gap-8 md:flex-row">
-        {/* Filter sidebar */}
-        <aside className="w-full md:w-[260px] md:flex-shrink-0">
+        {/* Filter sidebar - desktop */}
+        <aside className="hidden w-full md:block md:w-[260px] md:flex-shrink-0">
           <div className="rounded-lg border border-border bg-card p-4">
             <h3 className="text-sm font-semibold text-foreground">
               Filters
@@ -295,7 +308,102 @@ export function BooksPageClient({ initialData, categories }: BooksPageClientProp
           )}
         </div>
       </div>
+
+      {/* Mobile filters drawer */}
+      {filtersOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 md:hidden">
+          <div className="w-full max-h-[80vh] rounded-t-2xl bg-card p-4 shadow-lg">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-foreground">
+                Filters
+              </h3>
+              <button
+                type="button"
+                className="text-sm text-muted-foreground"
+                onClick={() => setFiltersOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="space-y-6 overflow-y-auto pb-4">
+              {/* Category filter */}
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Category
+                </p>
+                <div className="mt-2 space-y-1">
+                  <button
+                    type="button"
+                    onClick={() => handleCategoryChange(null)}
+                    className={`w-full rounded-md px-2 py-1.5 text-left text-sm ${
+                      !selectedCategory
+                        ? "bg-primary text-primary-foreground"
+                        : "text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    All
+                  </button>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.slug}
+                      type="button"
+                      onClick={() => handleCategoryChange(cat.slug)}
+                      className={`w-full rounded-md px-2 py-1.5 text-left text-sm ${
+                        selectedCategory === cat.slug
+                          ? "bg-primary text-primary-foreground"
+                          : "text-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {cat.category_name || cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price filter */}
+              <div>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Price range
+                </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="number"
+                    className="h-9 w-full rounded-md border border-border bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Min"
+                    value={minPrice ?? ""}
+                    onChange={(e) =>
+                      setMinPrice(
+                        e.target.value === "" ? undefined : Number(e.target.value)
+                      )
+                    }
+                  />
+                  <span className="text-xs text-muted-foreground">–</span>
+                  <input
+                    type="number"
+                    className="h-9 w-full rounded-md border border-border bg-background px-2 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                    placeholder="Max"
+                    value={maxPrice ?? ""}
+                    onChange={(e) =>
+                      setMaxPrice(
+                        e.target.value === "" ? undefined : Number(e.target.value)
+                      )
+                    }
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="mt-2 w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+              onClick={() => setFiltersOpen(false)}
+            >
+              Apply Filters
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
-

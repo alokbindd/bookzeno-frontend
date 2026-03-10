@@ -61,6 +61,7 @@ function NavbarInner() {
   const { isAuthenticated, user, logout } = useAuth()
   const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
+  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false)
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -340,19 +341,45 @@ function NavbarInner() {
           </div>
 
           <nav className="flex flex-col gap-1">
-            <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Categories
-            </p>
-            {categories.map((cat) => (
-              <Link
-                key={cat.slug}
-                href={`/category/${cat.slug}`}
-                className="rounded-md px-2 py-2 text-sm text-foreground hover:bg-secondary"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {cat.name}
-              </Link>
-            ))}
+            <button
+              type="button"
+              className="flex items-center justify-between rounded-md px-2 py-2 text-sm font-medium text-foreground hover:bg-secondary"
+              onClick={() => setMobileCategoriesOpen((v) => !v)}
+            >
+              <span>Categories</span>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${
+                  mobileCategoriesOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            {mobileCategoriesOpen && (
+              <div className="mt-1 space-y-1 rounded-md bg-muted/40 px-1 py-1">
+                <Link
+                  href="/"
+                  className="block rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-secondary"
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    setMobileCategoriesOpen(false)
+                  }}
+                >
+                  All Books
+                </Link>
+                {categories.map((cat) => (
+                  <Link
+                    key={cat.slug}
+                    href={`/category/${cat.slug}`}
+                    className="block rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-secondary"
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                      setMobileCategoriesOpen(false)
+                    }}
+                  >
+                    {cat.category_name || cat.name || "Category"}
+                  </Link>
+                ))}
+              </div>
+            )}
             <div className="my-2 border-t border-border" />
             {isAuthenticated && user ? (
               <>

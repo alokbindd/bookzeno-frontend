@@ -62,19 +62,15 @@ export function AccountLayoutClient({ children }: { children: React.ReactNode })
           <button
             type="button"
             className="mb-4 inline-flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm text-foreground shadow-sm lg:hidden"
-            onClick={() => setSidebarOpen((v) => !v)}
+            onClick={() => setSidebarOpen(true)}
           >
             <User className="h-4 w-4" />
             Account Menu
           </button>
 
           <div className="flex flex-1 gap-6">
-            {/* Sidebar */}
-            <aside
-              className={`w-64 shrink-0 rounded-lg border border-border bg-card p-4 shadow-sm ${
-                sidebarOpen ? "block" : "hidden lg:block"
-              }`}
-            >
+            {/* Sidebar - desktop */}
+            <aside className="hidden w-64 shrink-0 rounded-lg border border-border bg-card p-4 shadow-sm lg:block">
               <nav className="space-y-1 text-sm">
                 {sidebarItems.map((item) => {
                   const active = isActive(item.href)
@@ -111,6 +107,63 @@ export function AccountLayoutClient({ children }: { children: React.ReactNode })
             </section>
           </div>
         </div>
+
+        {/* Mobile sidebar overlay */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 z-40 flex lg:hidden">
+            <div
+              className="h-full w-full bg-black/40"
+              onClick={() => setSidebarOpen(false)}
+            />
+            <aside className="fixed left-0 top-0 z-50 flex h-screen w-72 flex-col rounded-r-2xl border-r border-border bg-card p-4 shadow-lg">
+              <div className="mb-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  <span className="text-sm font-medium">Account</span>
+                </div>
+                <button
+                  type="button"
+                  className="text-xs text-muted-foreground"
+                  onClick={() => setSidebarOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+              <nav className="space-y-1 text-sm">
+                {sidebarItems.map((item) => {
+                  const active = isActive(item.href)
+                  const Icon = item.icon
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-2 rounded-md px-3 py-2 transition-colors ${
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : "text-foreground hover:bg-muted"
+                      }`}
+                      onClick={() => setSidebarOpen(false)}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Link>
+                  )
+                })}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await handleLogout()
+                    setSidebarOpen(false)
+                  }}
+                  className="mt-2 flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-red-600 hover:bg-muted"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </button>
+              </nav>
+            </aside>
+          </div>
+        )}
       </main>
       <Footer />
     </div>
