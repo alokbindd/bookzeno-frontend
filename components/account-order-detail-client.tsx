@@ -125,6 +125,14 @@ export function AccountOrderDetailClient() {
   const tax = typeof taxRaw === "string" ? parseFloat(taxRaw) : taxRaw
   const grand = typeof grandRaw === "string" ? parseFloat(grandRaw) : grandRaw
 
+  const addressLines =
+    fullAddress === "—"
+      ? ["—"]
+      : String(fullAddress)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+
   return (
     <>
       <style jsx global>{`
@@ -147,201 +155,303 @@ export function AccountOrderDetailClient() {
       `}</style>
 
       <div id="invoice-section" className="space-y-6 rounded-lg bg-background">
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-xl font-semibold text-foreground">
-              Order {order.order_number || orderNumber}
-            </h1>
+        {/* Desktop layout */}
+        <div className="hidden space-y-6 md:block">
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="text-xl font-semibold text-foreground">
+                Order {order.order_number || orderNumber}
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Placed on{" "}
+                {order.created_at ? new Date(order.created_at).toLocaleDateString() : "—"}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                <BookOpen className="h-6 w-6 text-primary" />
+              </div>
+              <div className="text-right">
+                <p className="text-base font-semibold text-foreground">Bookzeno</p>
+                <p className="text-xs text-muted-foreground">www.bookzeno.com</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="rounded-lg border border-border bg-card p-4">
+              <h2 className="text-sm font-semibold text-foreground">Order Information</h2>
+              <dl className="mt-3 space-y-1 text-sm text-muted-foreground">
+                <div className="flex justify-between">
+                  <dt>Order Number</dt>
+                  <dd className="text-foreground">{order.order_number || orderNumber}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>Status</dt>
+                  <dd className="capitalize text-foreground">{order.status}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>Payment Method</dt>
+                  <dd className="text-foreground">{paymentMethod}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>Transaction ID</dt>
+                  <dd className="text-foreground">{transactionId}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>Paid on</dt>
+                  <dd className="text-foreground">{paidOnRaw ? new Date(paidOnRaw).toLocaleString() : "—"}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className="rounded-lg border border-border bg-card p-4">
+              <h2 className="text-sm font-semibold text-foreground">Customer Information</h2>
+              <dl className="mt-3 space-y-1 text-sm text-muted-foreground">
+                <div className="flex justify-between">
+                  <dt>Name</dt>
+                  <dd className="text-foreground">{customerName}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>Email</dt>
+                  <dd className="text-foreground">{customerEmail}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>Phone</dt>
+                  <dd className="text-foreground">{customerPhone}</dd>
+                </div>
+                <div className="flex justify-between">
+                  <dt>Address</dt>
+                  <dd className="max-w-xs text-right text-foreground">{fullAddress}</dd>
+                </div>
+              </dl>
+              {orderNote && (
+                <div className="mt-3 rounded-md border border-border bg-muted/30 p-3">
+                  <p className="text-xs font-medium text-muted-foreground">Order Note</p>
+                  <p className="mt-1 whitespace-pre-line text-sm text-foreground">{orderNote}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Items */}
+          <div className="overflow-hidden rounded-lg border border-border bg-card">
+            <table className="w-full text-sm">
+              <thead className="bg-secondary/50 text-left">
+                <tr>
+                  <th className="px-4 py-2">Book</th>
+                  <th className="px-4 py-2">Title</th>
+                  <th className="px-4 py-2">Quantity</th>
+                  <th className="px-4 py-2">Price</th>
+                  <th className="px-4 py-2">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item: any, idx: number) => {
+                  const qty = item.quantity ?? 1
+                  const priceRaw = item.book_price ?? item.price ?? item.unit_price ?? 0
+                  const price = typeof priceRaw === "string" ? parseFloat(priceRaw) : priceRaw
+                  const total =
+                    item.total ??
+                    (price || 0) * (typeof qty === "string" ? parseInt(qty, 10) : qty)
+                  const book = item.book || item.product || {}
+                  const title = book.title || item.book_title || item.title || "Book"
+                  const cover = book.cover_image || book.cover_image_url || book.image || item.cover_image
+
+                  return (
+                    <tr key={idx} className="border-t border-border/60">
+                      <td className="px-4 py-3">
+                        {cover ? (
+                          <div className="relative h-16 w-12 overflow-hidden rounded">
+                            <Image src={cover} alt={title} fill className="object-cover" />
+                          </div>
+                        ) : (
+                          <div className="h-16 w-12 rounded bg-muted" />
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-foreground">{title}</td>
+                      <td className="px-4 py-3 text-center">{qty}</td>
+                      <td className="px-4 py-3">{currency.format(price || 0)}</td>
+                      <td className="px-4 py-3 font-medium">
+                        {currency.format(typeof total === "string" ? parseFloat(total) : total || 0)}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Summary */}
+          <div className="flex flex-col items-end gap-1 text-sm">
+            <div className="flex w-full max-w-sm justify-between">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span className="text-foreground">{currency.format(subtotal || 0)}</span>
+            </div>
+            <div className="flex w-full max-w-sm justify-between">
+              <span className="text-muted-foreground">Tax</span>
+              <span className="text-foreground">{currency.format(tax || 0)}</span>
+            </div>
+            <div className="mt-1 flex w-full max-w-sm justify-between border-t border-border pt-2">
+              <span className="font-semibold text-foreground">Grand Total</span>
+              <span className="font-semibold text-foreground">{currency.format(grand || 0)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile layout */}
+        <div className="space-y-4 md:hidden">
+          {/* Header */}
+          <div className="rounded-lg border border-border bg-card p-4">
+            <p className="text-base font-semibold text-foreground">
+              Order #{order.order_number || orderNumber}
+            </p>
             <p className="mt-1 text-sm text-muted-foreground">
               Placed on{" "}
               {order.created_at
-                ? new Date(order.created_at).toLocaleDateString()
+                ? new Date(order.created_at).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "2-digit",
+                    year: "numeric",
+                  })
                 : "—"}
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-              <BookOpen className="h-6 w-6 text-primary" />
-            </div>
-            <div className="text-right">
-              <p className="text-base font-semibold text-foreground">
-                Bookzeno
-              </p>
-              <p className="text-xs text-muted-foreground">
-                www.bookzeno.com
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
+          {/* Order information */}
           <div className="rounded-lg border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold text-foreground">
-              Order Information
-            </h2>
-            <dl className="mt-3 space-y-1 text-sm text-muted-foreground">
-              <div className="flex justify-between">
-                <dt>Order Number</dt>
-                <dd className="text-foreground">
-                  {order.order_number || orderNumber}
-                </dd>
+            <h2 className="text-sm font-semibold text-foreground">Order Information</h2>
+            <div className="mt-3 space-y-3 text-sm">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Order Number</p>
+                <p className="mt-0.5 text-foreground">{order.order_number || orderNumber}</p>
               </div>
-              <div className="flex justify-between">
-                <dt>Status</dt>
-                <dd className="capitalize text-foreground">
-                  {order.status}
-                </dd>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Status</p>
+                <p className="mt-0.5 capitalize text-foreground">{order.status || "—"}</p>
               </div>
-              <div className="flex justify-between">
-                <dt>Payment Method</dt>
-                <dd className="text-foreground">{paymentMethod}</dd>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Payment Method</p>
+                <p className="mt-0.5 text-foreground">{paymentMethod}</p>
               </div>
-              <div className="flex justify-between">
-                <dt>Transaction ID</dt>
-                <dd className="text-foreground">{transactionId}</dd>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Transaction ID</p>
+                <p className="mt-0.5 break-all text-foreground">{transactionId}</p>
               </div>
-              <div className="flex justify-between">
-                <dt>Paid on</dt>
-                <dd className="text-foreground">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Paid on</p>
+                <p className="mt-0.5 text-foreground">
                   {paidOnRaw
                     ? new Date(paidOnRaw).toLocaleString()
                     : "—"}
-                </dd>
+                </p>
               </div>
-            </dl>
+            </div>
           </div>
 
+          {/* Customer information */}
           <div className="rounded-lg border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold text-foreground">
-              Customer Information
-            </h2>
-            <dl className="mt-3 space-y-1 text-sm text-muted-foreground">
-              <div className="flex justify-between">
-                <dt>Name</dt>
-                <dd className="text-foreground">{customerName}</dd>
+            <h2 className="text-sm font-semibold text-foreground">Customer Information</h2>
+            <div className="mt-3 space-y-3 text-sm">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Name</p>
+                <p className="mt-0.5 text-foreground">{customerName}</p>
               </div>
-              <div className="flex justify-between">
-                <dt>Email</dt>
-                <dd className="text-foreground">{customerEmail}</dd>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Email</p>
+                <p className="mt-0.5 break-words text-foreground">{customerEmail}</p>
               </div>
-              <div className="flex justify-between">
-                <dt>Phone</dt>
-                <dd className="text-foreground">{customerPhone}</dd>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Phone</p>
+                <p className="mt-0.5 text-foreground">{customerPhone}</p>
               </div>
-              <div className="flex justify-between">
-                <dt>Address</dt>
-                <dd className="max-w-xs text-right text-foreground">
-                  {fullAddress}
-                </dd>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Address</p>
+                <div className="mt-0.5 space-y-0.5 text-foreground">
+                  {addressLines.map((line, idx) => (
+                    <p key={idx}>{line}</p>
+                  ))}
+                </div>
               </div>
-            </dl>
+            </div>
+
             {orderNote && (
-              <div className="mt-3 rounded-md border border-border bg-muted/30 p-3">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Order Note
-                </p>
-                <p className="mt-1 whitespace-pre-line text-sm text-foreground">
-                  {orderNote}
-                </p>
+              <div className="mt-4 rounded-md border border-border bg-muted/30 p-3">
+                <p className="text-xs font-medium text-muted-foreground">Order Note</p>
+                <p className="mt-1 whitespace-pre-line text-sm text-foreground">{orderNote}</p>
               </div>
             )}
           </div>
-        </div>
 
-        {/* Items */}
-        <div className="overflow-hidden rounded-lg border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead className="bg-secondary/50 text-left">
-              <tr>
-                <th className="px-4 py-2">Book</th>
-                <th className="px-4 py-2">Title</th>
-                <th className="px-4 py-2">Quantity</th>
-                <th className="px-4 py-2">Price</th>
-                <th className="px-4 py-2">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item: any, idx: number) => {
-                const qty = item.quantity ?? 1
-                const priceRaw =
-                  item.book_price ??
-                  item.price ??
-                  item.unit_price ??
-                  0
-                const price =
-                  typeof priceRaw === "string"
-                    ? parseFloat(priceRaw)
-                    : priceRaw
-                const total =
-                  item.total ??
-                  (price || 0) *
-                    (typeof qty === "string" ? parseInt(qty, 10) : qty)
-                const book = item.book || item.product || {}
-                const title =
-                  book.title || item.book_title || item.title || "Book"
-                const cover =
-                  book.cover_image ||
-                  book.cover_image_url ||
-                  book.image ||
-                  item.cover_image
+          {/* Ordered books */}
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-foreground">Ordered Books</p>
+            {items.map((item: any, idx: number) => {
+              const qty = item.quantity ?? 1
+              const priceRaw = item.book_price ?? item.price ?? item.unit_price ?? 0
+              const price = typeof priceRaw === "string" ? parseFloat(priceRaw) : priceRaw
+              const total =
+                item.total ??
+                (price || 0) * (typeof qty === "string" ? parseInt(qty, 10) : qty)
+              const book = item.book || item.product || {}
+              const title = book.title || item.book_title || item.title || "Book"
+              const cover = book.cover_image || book.cover_image_url || book.image || item.cover_image
 
-                return (
-                  <tr key={idx} className="border-t border-border/60">
-                    <td className="px-4 py-3">
+              return (
+                <div key={idx} className="rounded-lg border border-border bg-card p-4">
+                  <div className="flex gap-3">
+                    <div className="shrink-0">
                       {cover ? (
-                        <div className="relative h-16 w-12 overflow-hidden rounded">
-                          <Image
-                            src={cover}
-                            alt={title}
-                            fill
-                            className="object-cover"
-                          />
+                        <div className="relative h-20 w-14 overflow-hidden rounded bg-muted">
+                          <Image src={cover} alt={title} fill className="object-cover" />
                         </div>
                       ) : (
-                        <div className="h-16 w-12 rounded bg-muted" />
+                        <div className="h-20 w-14 rounded bg-muted" />
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-foreground">{title}</td>
-                    <td className="px-4 py-3 text-center">{qty}</td>
-                    <td className="px-4 py-3">
-                      {currency.format(price || 0)}
-                    </td>
-                    <td className="px-4 py-3 font-medium">
-                      {currency.format(
-                        typeof total === "string"
-                          ? parseFloat(total)
-                          : total || 0
-                      )}
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground">{title}</p>
+                      <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Qty</p>
+                          <p className="text-foreground">{qty}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Price</p>
+                          <p className="text-foreground">{currency.format(price || 0)}</p>
+                        </div>
+                        <div className="col-span-2">
+                          <p className="text-xs text-muted-foreground">Total</p>
+                          <p className="font-medium text-foreground">
+                            {currency.format(typeof total === "string" ? parseFloat(total) : total || 0)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
 
-        {/* Summary */}
-        <div className="flex flex-col items-end gap-1 text-sm">
-          <div className="flex w-full max-w-sm justify-between">
-            <span className="text-muted-foreground">Subtotal</span>
-            <span className="text-foreground">
-              {currency.format(subtotal || 0)}
-            </span>
-          </div>
-          <div className="flex w-full max-w-sm justify-between">
-            <span className="text-muted-foreground">Tax</span>
-            <span className="text-foreground">
-              {currency.format(tax || 0)}
-            </span>
-          </div>
-          <div className="mt-1 flex w-full max-w-sm justify-between border-t border-border pt-2">
-            <span className="font-semibold text-foreground">
-              Grand Total
-            </span>
-            <span className="font-semibold text-foreground">
-              {currency.format(grand || 0)}
-            </span>
+          {/* Summary */}
+          <div className="rounded-lg border border-border bg-card p-4">
+            <h2 className="text-sm font-semibold text-foreground">Order Summary</h2>
+            <div className="mt-3 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="text-foreground">{currency.format(subtotal || 0)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Tax</span>
+                <span className="text-foreground">{currency.format(tax || 0)}</span>
+              </div>
+              <div className="flex justify-between border-t border-border pt-2">
+                <span className="font-semibold text-foreground">Grand Total</span>
+                <span className="font-semibold text-foreground">{currency.format(grand || 0)}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
