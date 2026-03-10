@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import {
@@ -9,7 +10,6 @@ import {
   User,
   Menu,
   X,
-  BookOpen,
   ChevronDown,
   LogOut,
   Moon,
@@ -35,7 +35,13 @@ function NavbarFallback() {
     <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
-          <BookOpen className="h-7 w-7 text-primary" />
+          <Image
+            src="/logo.svg"
+            alt="Bookzeno logo"
+            width={50}
+            height={50}
+            priority
+          />
           <span className="text-xl font-bold tracking-tight text-foreground font-serif">
             Bookzeno
           </span>
@@ -105,7 +111,13 @@ function NavbarInner() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <BookOpen className="h-7 w-7 text-primary" />
+          <Image
+            src="/logo.svg"
+            alt="Bookzeno logo"
+            width={50}
+            height={50}
+            priority
+          />
           <span className="text-xl font-bold tracking-tight text-foreground font-serif">
             Bookzeno
           </span>
