@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import Image from "next/image"
+import Logo from "@/components/logo"
 import { RegisterForm } from "@/components/register-form"
 
 export const metadata: Metadata = {
@@ -12,13 +12,7 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-secondary px-4 py-12">
       <Link href="/" className="mb-8 flex items-center gap-2">
-        <Image
-          src="/logo.svg"
-          alt="Bookzeno logo"
-          width={50}
-          height={50}
-          priority
-        />
+        <Logo size={50} />
         <span className="text-2xl font-bold font-serif text-foreground">Bookzeno</span>
       </Link>
 
@@ -45,3 +39,4 @@ export default function RegisterPage() {
     </div>
   )
 }
+

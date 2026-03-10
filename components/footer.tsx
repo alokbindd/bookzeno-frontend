@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { BookOpen } from "lucide-react"
+import Logo from "@/components/logo"
 
 export function Footer() {
   return (
@@ -9,7 +9,7 @@ export function Footer() {
           {/* Brand */}
           <div>
             <Link href="/" className="flex items-center gap-2">
-              <BookOpen className="h-6 w-6 text-primary" />
+              <Logo size={32} />
               <span className="text-lg font-bold font-serif text-foreground">Bookzeno</span>
             </Link>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import Image from "next/image"
 import { BookOpen } from "lucide-react"
 import { getOrderByNumber } from "@/lib/api"
+import Logo from "@/components/logo"
 
 export function AccountOrderDetailClient() {
   const params = useParams<{ order_number: string }>()
@@ -160,27 +161,27 @@ export function AccountOrderDetailClient() {
       >
         {/* Desktop layout */}
         <div className="hidden space-y-6 md:block print:block">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-foreground">
-                Order {order.order_number || orderNumber}
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Placed on{" "}
-                {order.created_at ? new Date(order.created_at).toLocaleDateString() : "—"}
-              </p>
-            </div>
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-xl font-semibold text-foreground">
+                  Order {order.order_number || orderNumber}
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Placed on{" "}
+                  {order.created_at ? new Date(order.created_at).toLocaleDateString() : "—"}
+                </p>
+              </div>
 
-            <div className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-                <BookOpen className="h-6 w-6 text-primary" />
-              </div>
-              <div className="text-right">
-                <p className="text-base font-semibold text-foreground">Bookzeno</p>
-                <p className="text-xs text-muted-foreground">www.bookzeno.com</p>
+              <div className="flex items-center gap-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+                  <Logo size={24} />
+                </div>
+                <div className="text-right">
+                  <p className="text-base font-semibold text-foreground">Bookzeno</p>
+                  <p className="text-xs text-muted-foreground">www.bookzeno.com</p>
+                </div>
               </div>
             </div>
-          </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-lg border border-border bg-card p-4">
