@@ -154,9 +154,12 @@ export function AccountOrderDetailClient() {
         }
       `}</style>
 
-      <div id="invoice-section" className="space-y-6 rounded-lg bg-background">
+      <div
+        id="invoice-section"
+        className="space-y-6 rounded-lg bg-background print:bg-white print:text-black"
+      >
         {/* Desktop layout */}
-        <div className="hidden space-y-6 md:block">
+        <div className="hidden space-y-6 md:block print:block">
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-xl font-semibold text-foreground">
@@ -301,7 +304,7 @@ export function AccountOrderDetailClient() {
         </div>
 
         {/* Mobile layout */}
-        <div className="space-y-4 md:hidden">
+        <div className="space-y-4 md:hidden print:hidden">
           {/* Header */}
           <div className="rounded-lg border border-border bg-card p-4">
             <p className="text-base font-semibold text-foreground">

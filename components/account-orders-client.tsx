@@ -169,6 +169,7 @@ export function AccountOrdersClient() {
           const status = order.status || order.state || "—"
           const normalizedStatus = String(status || "").toLowerCase()
           const grand = getTotal(order)
+          const isPending = normalizedStatus === "pending"
 
           return (
             <div
@@ -221,14 +222,20 @@ export function AccountOrdersClient() {
                 </span>
               </div>
 
-              <div className="mt-4 flex items-center gap-2">
+              <div
+                className={
+                  isPending
+                    ? "mt-4 flex flex-col gap-2"
+                    : "mt-4 flex items-center gap-2"
+                }
+              >
                 <Button asChild variant="outline" className="w-full">
                   <Link href={`/account/orders/${orderNumber}`}>View Details</Link>
                 </Button>
 
-                {normalizedStatus === "pending" && (
+                {isPending && (
                   <Button asChild className="w-full">
-                    <Link href={`/payment/${orderNumber}`}>Pay</Link>
+                    <Link href={`/payment/${orderNumber}`}>Pay Now</Link>
                   </Button>
                 )}
               </div>
