@@ -4,11 +4,6 @@ import { useState, useMemo } from "react"
 import Link from "next/link"
 import {
   BookOpen,
-  Lightbulb,
-  Cpu,
-  Heart,
-  TrendingUp,
-  Rocket,
   ChevronRight,
   SlidersHorizontal,
   ArrowUpDown,
@@ -23,15 +18,7 @@ import {
 } from "@/components/ui/select"
 import { BookCard } from "@/components/book-card"
 import { type Book, type Category } from "@/lib/data"
-
-const iconMap: Record<string, React.ElementType> = {
-  BookOpen,
-  Lightbulb,
-  Cpu,
-  Heart,
-  TrendingUp,
-  Rocket,
-}
+import { getCategoryIcon } from "@/lib/category-icons"
 
 type SortOption = "featured" | "price-low" | "price-high" | "rating" | "title"
 type StockFilter = "all" | "in-stock" | "on-sale"
@@ -51,8 +38,7 @@ export function CategoryPageClient({
   const [stockFilter, setStockFilter] = useState<StockFilter>("all")
 
   const categoryName = category.category_name || category.name || "Category"
-
-  const Icon = iconMap[category.icon || ""] || BookOpen
+  const CategoryIcon = getCategoryIcon(category.slug) || BookOpen
 
   const filteredAndSorted = useMemo(() => {
     let result = [...books]
@@ -123,7 +109,7 @@ export function CategoryPageClient({
 
           <div className="flex items-start gap-5">
             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Icon className="h-7 w-7" />
+              <CategoryIcon className="h-7 w-7" />
             </div>
             <div>
               <h1 className="font-serif text-3xl font-bold text-foreground md:text-4xl text-balance">
@@ -231,7 +217,7 @@ export function CategoryPageClient({
           </h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {siblingCategories.map((cat) => {
-              const CatIcon = cat.icon ? (iconMap[cat.icon] ?? BookOpen) : BookOpen
+              const CatIcon = getCategoryIcon(cat.slug) || BookOpen
               return (
                 <Link
                   key={cat.slug}

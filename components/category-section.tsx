@@ -2,45 +2,10 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import {
-  BookOpen,
-  Lightbulb,
-  Cpu,
-  Heart,
-  TrendingUp,
-  Rocket,
-  Atom,
-  Landmark,
-  Briefcase,
-  Baby,
-} from "lucide-react"
+import { BookOpen } from "lucide-react"
 import { getCategories } from "@/lib/api"
 import { Category } from "@/lib/data"
-
-// Map category names to appropriate icons based on document requirements
-const getIconForCategory = (name?: string | null): React.ElementType => {
-  if (!name || typeof name !== "string") {
-    return BookOpen
-  }
-  
-  const nameUpper = name.toUpperCase()
-  
-  // Document mappings
-  if (nameUpper.includes("FICTION")) return BookOpen
-  if (nameUpper.includes("SCIENCE")) return Atom
-  if (nameUpper.includes("TECHNOLOGY") || nameUpper.includes("TECH")) return Cpu
-  if (nameUpper.includes("HISTORY")) return Landmark
-  if (nameUpper.includes("BUSINESS")) return Briefcase
-  if (nameUpper.includes("CHILDREN") || nameUpper.includes("KIDS")) return Baby
-  
-  // Additional mappings for common variations
-  if (nameUpper.includes("ROMANCE") || nameUpper.includes("LOVE")) return Heart
-  if (nameUpper.includes("MOTIVATION") || nameUpper.includes("SELF-HELP")) return TrendingUp
-  if (nameUpper.includes("FANTASY") || nameUpper.includes("ADVENTURE")) return Rocket
-  if (nameUpper.includes("WISDOM") || nameUpper.includes("PHILOSOPHY")) return Lightbulb
-  
-  return BookOpen
-}
+import { getCategoryIcon } from "@/lib/category-icons"
 
 export function CategorySection() {
   const [categories, setCategories] = useState<Category[]>([])
@@ -113,7 +78,7 @@ export function CategorySection() {
           {categories.filter(cat => cat && cat.slug).map((category) => {
             const categoryName = category.category_name || category.name || "Category"
             const categorySlug = category.slug || ""
-            const Icon = getIconForCategory(categoryName)
+            const Icon = getCategoryIcon(categorySlug) || BookOpen
             
             if (!categorySlug) return null
             
